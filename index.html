@@ -118,7 +118,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:var(--fn)
     <button class="tbtn" onclick="toggleTheme()"></button>
   </div>
   <div class="stats">
-    <div class="stat"><div class="sv" id="st-done">0/6</div><div class="sl">오늘 완료</div></div>
+    <div class="stat"><div class="sv" id="st-done">0/12</div><div class="sl">오늘 완료</div></div>
     <div class="stat"><div class="sv" id="st-streak">0일</div><div class="sl">연속 일수</div></div>
     <div class="stat"><div class="sv" id="st-total">0</div><div class="sl">총 완료</div></div>
   </div>
@@ -201,6 +201,11 @@ const GAMES=[
   {id:'soundmatch',name:'소리 기억', icon:'🔊',desc:'같은 소리 카드 짝 맞추기'},
   {id:'stroop',   name:'스트룹 게임', icon:'🔤',desc:'글자 색깔을 골라요 (글자 내용 무시)'},
   {id:'echo',     name:'메아리 게임', icon:'🔁',desc:'들려주는 소리가 몇 번인지 세어보세요'},
+  /* ── 고난이도 퍼즐 ── */
+  {id:'nback',    name:'N-Back 기억', icon:'🧩',desc:'N단계 전 위치를 기억하세요 (고난이도)'},
+  {id:'mathchain',name:'연산 사슬',   icon:'🔗',desc:'연속 계산을 암산으로 풀어보세요'},
+  {id:'wordmaze', name:'단어 미로',   icon:'🔤',desc:'글자를 조합해 숨겨진 단어를 찾으세요'},
+  {id:'dualback', name:'이중 기억',   icon:'🧠',desc:'숫자와 위치를 동시에 기억하세요'},
 ];
 const DEF_TIMES=['09:00','13:00','19:00'];
 let S={done:[],log:[],streak:0,total:0,times:[...DEF_TIMES],notifOn:true};
@@ -219,7 +224,7 @@ function init(){
 }
 function checkStreak(){const t=today(),y=new Date(Date.now()-86400000).toISOString().slice(0,10);if(!S.log.some(l=>l.date===t)&&!S.log.some(l=>l.date===y)&&S.streak>0){S.streak=0;save()}}
 function renderStats(){const t=today(),n=S.log.filter(l=>l.date===t).length;document.getElementById('st-done').textContent=n+'/'+GAMES.length;document.getElementById('st-streak').textContent=S.streak+'일';document.getElementById('st-total').textContent=S.total}
-function renderGames(){const t=today(),done=S.log.filter(l=>l.date===t).map(l=>l.id);document.getElementById('game-grid').innerHTML=GAMES.map(g=>`<div class="gcard ${done.includes(g.id)?'done':''}" onclick="openGame('${g.id}')"><div class="gico">${g.icon}</div><div class="gnm">${g.name}</div><div class="gds">${g.desc}</div>${done.includes(g.id)?'<div class="gbdg">✓ 완료!</div>':''}</div>`).join('')}
+function renderGames(){const t=today(),done=S.log.filter(l=>l.date===t).map(l=>l.id);const hardIds=['nback','mathchain','wordmaze','dualback'];document.getElementById('game-grid').innerHTML=GAMES.map(g=>`<div class="gcard ${done.includes(g.id)?'done':''}" onclick="openGame('${g.id}')"><div class="gico">${g.icon}</div><div class="gnm">${g.name}${hardIds.includes(g.id)?'<span style="font-size:10px;background:var(--red);color:white;border-radius:8px;padding:2px 6px;margin-left:6px;vertical-align:middle">고난이도</span>':''}</div><div class="gds">${g.desc}</div>${done.includes(g.id)?'<div class="gbdg">✓ 완료!</div>':''}</div>`).join('')}
 function renderLog(){const list=document.getElementById('log-list'),empty=document.getElementById('log-empty'),recent=[...S.log].reverse().slice(0,30);if(!recent.length){list.innerHTML='';empty.style.display='block';return}empty.style.display='none';list.innerHTML=recent.map(l=>{const g=GAMES.find(x=>x.id===l.id);return`<div class="logi"><span>${g?g.icon:''} ${l.name}</span><div style="text-align:right"><div style="color:var(--green);font-weight:700">${l.score}</div><div style="font-size:11px;color:var(--text2)">${l.date} ${l.time}</div></div></div>`}).join('')}
 function renderTimes(){document.getElementById('ntimes').innerHTML=S.times.map(t=>`<button class="tchip" onclick="rmTime('${t}')" title="탭하면 삭제">${t}</button>`).join('')}
 function addTime(){const t=prompt('알림 시간 입력 (예: 08:30)');if(t&&/^\d{2}:\d{2}$/.test(t)&&!S.times.includes(t)){S.times.push(t);S.times.sort();save();renderTimes()}}
@@ -244,6 +249,10 @@ function openGame(id){
   else if(id==='soundmatch')renderSoundMatch(g,body);
   else if(id==='stroop')renderStroop(g,body);
   else if(id==='echo')renderEcho(g,body);
+  else if(id==='nback')renderNBack(g,body);
+  else if(id==='mathchain')renderMathChain(g,body);
+  else if(id==='wordmaze')renderWordMaze(g,body);
+  else if(id==='dualback')renderDualBack(g,body);
 }
 function closeGame(){document.getElementById('gscreen').classList.remove('active');if(window._AC){window._AC();window._AC=null}}
 function addLog(g,score){
@@ -252,7 +261,7 @@ function addLog(g,score){
   S.log.push({id:g.id,name:g.name,date:t,time:now,score});S.total++;
   const n=S.log.filter(l=>l.date===t).length;
   if(n===1){const y=new Date(Date.now()-86400000).toISOString().slice(0,10);S.streak=S.log.some(l=>l.date===y)?S.streak+1:1}
-  if(n===GAMES.length)toast('🎉 오늘 모든 운동 완료!');
+  if(n===GAMES.length)toast('🎉 오늘 모든 두뇌 운동 완료!');
   save();renderStats();renderGames();
 }
 function showResult(g,score,msg,emoji='🎉'){
@@ -438,6 +447,436 @@ function renderEcho(g,body){
     };
   }
   render();
+}
+
+/* GAME 9: N-BACK 위치 기억 (고난이도) */
+function renderNBack(g,body){
+  const GRID=9;
+
+  /* ── 설정 화면 ── */
+  function showSettings(){
+    body.innerHTML=`
+      <div class="c" style="font-size:22px;margin:8px 0">🧩 N-Back 설정</div>
+      <div class="c ts tc" style="color:var(--text2);margin-bottom:20px">난이도를 직접 설정하세요</div>
+
+      <div style="background:var(--bg);box-shadow:var(--ni);border-radius:var(--r);padding:20px;margin-bottom:16px">
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px">N 값 <span style="font-size:12px;color:var(--text2);font-weight:400">(몇 번 전 위치를 기억할지)</span></div>
+        <div style="display:flex;gap:10px;justify-content:center" id="nSel">
+          ${[1,2,3,4].map(n=>`<button id="nopt${n}" onclick="window._nbSetN(${n})" style="width:56px;height:56px;border:none;border-radius:14px;background:${n===2?'var(--accent)':'var(--bg)'};box-shadow:${n===2?'0 4px 14px rgba(74,144,217,0.5)':'var(--ns)'};cursor:pointer;font-size:22px;font-weight:700;color:${n===2?'white':'var(--text)'};font-family:var(--fn);transition:all 0.15s">${n}</button>`).join('')}
+        </div>
+        <div class="c mt12" style="font-size:12px;color:var(--text2)" id="nDesc">2번 전 위치와 현재 위치를 비교</div>
+      </div>
+
+      <div style="background:var(--bg);box-shadow:var(--ni);border-radius:var(--r);padding:20px;margin-bottom:20px">
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px">문제 수 <span style="font-size:12px;color:var(--text2);font-weight:400">(총 라운드)</span></div>
+        <div style="display:flex;gap:10px;justify-content:center" id="tSel">
+          ${[10,15,20,25].map((t,i)=>`<button id="topt${t}" onclick="window._nbSetT(${t})" style="width:56px;height:56px;border:none;border-radius:14px;background:${t===15?'var(--accent)':'var(--bg)'};box-shadow:${t===15?'0 4px 14px rgba(74,144,217,0.5)':'var(--ns)'};cursor:pointer;font-size:16px;font-weight:700;color:${t===15?'white':'var(--text)'};font-family:var(--fn);transition:all 0.15s">${t}</button>`).join('')}
+        </div>
+      </div>
+
+      <button onclick="window._nbStart()" class="nbtn acc blk" style="font-size:16px;padding:16px">▶ 시작하기</button>`;
+
+    let selN=2, selT=15;
+    const nDescs={1:'1번 전 위치와 현재 위치를 비교',2:'2번 전 위치와 현재 위치를 비교',3:'3번 전 위치와 현재 위치를 비교 (어려움)',4:'4번 전 위치와 현재 위치를 비교 (매우 어려움)'};
+
+    window._nbSetN=(n)=>{
+      selN=n;
+      [1,2,3,4].forEach(x=>{
+        const b=document.getElementById('nopt'+x);
+        if(!b)return;
+        const on=(x===n);
+        b.style.background=on?'var(--accent)':'var(--bg)';
+        b.style.color=on?'white':'var(--text)';
+        b.style.boxShadow=on?'0 4px 14px rgba(74,144,217,0.5)':'var(--ns)';
+      });
+      const d=document.getElementById('nDesc');
+      if(d)d.textContent=nDescs[n];
+    };
+    window._nbSetT=(t)=>{
+      selT=t;
+      [10,15,20,25].forEach(x=>{
+        const b=document.getElementById('topt'+x);
+        if(!b)return;
+        const on=(x===t);
+        b.style.background=on?'var(--accent)':'var(--bg)';
+        b.style.color=on?'white':'var(--text)';
+        b.style.boxShadow=on?'0 4px 14px rgba(74,144,217,0.5)':'var(--ns)';
+      });
+    };
+    window._nbStart=()=>startGame(selN,selT);
+  }
+
+  /* ── 게임 본체 ── */
+  function startGame(N, TOTAL){
+    let sequence=[],idx=0,score=0,hits=0,misses=0;
+    let prev=Array(N).fill(-1), answered=false;
+
+    function genSeq(){
+      sequence=[];
+      for(let i=0;i<TOTAL;i++){
+        if(i>=N && Math.random()<0.3) sequence.push(sequence[i-N]);
+        else{let r;do{r=Math.floor(Math.random()*GRID);}while(i>=N&&r===sequence[i-N]);sequence.push(r);}
+      }
+    }
+
+    function renderGrid(){
+      body.innerHTML=`
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:13px;color:var(--text2)">${idx+1} / ${TOTAL}</span>
+          <span style="font-size:13px;font-weight:700;color:var(--accent)">${N}-Back 모드</span>
+        </div>
+        <div class="pwrap"><div class="pbar" style="width:${idx/TOTAL*100}%"></div></div>
+        <div class="c mt8" style="font-size:12px;color:var(--text2)"><b>${N}번 전</b> 위치와 같으면 ✅, 다르면 ❌</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:280px;margin:14px auto" id="ng">
+          ${Array.from({length:GRID},(_,i)=>`<div id="nc${i}" style="aspect-ratio:1;border-radius:12px;background:var(--bg);box-shadow:var(--ni);display:flex;align-items:center;justify-content:center;font-size:20px;transition:background 0.2s"></div>`).join('')}
+        </div>
+        <div style="display:flex;gap:16px;margin-top:8px">
+          <button id="btnY" onclick="window._nba(true)"  style="flex:1;padding:22px 0;border:none;border-radius:var(--r);background:var(--green);box-shadow:var(--ns);cursor:pointer;font-size:22px;font-weight:700;color:white;font-family:var(--fn)">✅ 같다</button>
+          <button id="btnN" onclick="window._nba(false)" style="flex:1;padding:22px 0;border:none;border-radius:var(--r);background:var(--red);box-shadow:var(--ns);cursor:pointer;font-size:22px;font-weight:700;color:white;font-family:var(--fn)">❌ 다르다</button>
+        </div>
+        <div class="msgb mt12" id="nbm"></div>
+        <div class="c ts tc mt8" style="color:var(--text2)">맞음: ${hits} | 틀림: ${misses}</div>`;
+
+      // 이전 위치 희미하게 표시
+      prev.forEach((p,pi)=>{
+        if(p<0)return;
+        const el=document.getElementById('nc'+p);
+        if(el)el.style.background=`rgba(74,144,217,${0.2-pi*0.04})`;
+      });
+      // 현재 위치 강조
+      const cel=document.getElementById('nc'+sequence[idx]);
+      if(cel){cel.style.background='var(--accent)';cel.style.color='white';cel.textContent='★';playT(440,200,'sine',0.2);}
+
+      if(idx<N){
+        ['btnY','btnN'].forEach(id=>{const b=document.getElementById(id);if(b){b.style.opacity='0.35';b.style.pointerEvents='none';}});
+        const m=document.getElementById('nbm');
+        m.textContent=`아직 ${N}번 전 위치가 없어요 — 기억하세요!`;
+        m.style.color='var(--text2)';
+        answered=true;
+        setTimeout(next,1300);
+      }else answered=false;
+    }
+
+    function next(){
+      prev=[sequence[idx],...prev.slice(0,N-1)];
+      idx++;
+      if(idx>=TOTAL){showResult(g,score+'점',score>=Math.floor(TOTAL*0.6)?'N-Back 챔피언! 🧩':'다시 도전해보세요!','🧩');return;}
+      renderGrid();
+    }
+
+    window._nba=(yes)=>{
+      if(answered)return;
+      answered=true;
+      const isMatch=(sequence[idx]===sequence[idx-N]);
+      const m=document.getElementById('nbm');
+      if(yes===isMatch){score++;hits++;playOK();m.textContent='정답! ✓';m.style.color='var(--green)';}
+      else{misses++;playNG();m.textContent=isMatch?'틀렸어요 — 같은 위치였어요!':'틀렸어요 — 다른 위치였어요!';m.style.color='var(--red)';}
+      setTimeout(next,900);
+    };
+
+    genSeq(); renderGrid();
+  }
+
+  showSettings();
+}
+
+/* GAME 10: 연산 사슬 (고난이도) */
+function renderMathChain(g,body){
+  const ROUNDS=6;
+  let round=0,score=0;
+
+  function makeChain(){
+    const len=3+Math.floor(Math.random()*2); // 3~4단계
+    let val=Math.floor(Math.random()*10)+5;
+    const steps=[val];
+    const ops=['+','-','×'];
+    let text=String(val);
+    for(let i=0;i<len-1;i++){
+      const op=ops[Math.floor(Math.random()*ops.length)];
+      let b;
+      if(op==='×') b=Math.floor(Math.random()*4)+2;
+      else b=Math.floor(Math.random()*10)+1;
+      if(op==='-' && b>val){b=Math.floor(val/2)||1;}
+      val=op==='+'?val+b:op==='-'?val-b:val*b;
+      text+=` ${op} ${b}`;
+    }
+    return{text,ans:val};
+  }
+
+  function render(){
+    const ch=makeChain();
+    body.innerHTML=`
+      <div class="c ts tc">${round+1} / ${ROUNDS}</div>
+      <div class="pwrap mt8"><div class="pbar" style="width:${round/ROUNDS*100}%"></div></div>
+      <div class="c ts tc mt12" style="font-size:13px;color:var(--text2)">암산으로 계산하세요!</div>
+      <div style="background:var(--bg);box-shadow:var(--ni);border-radius:var(--r);padding:24px 16px;margin:16px 0;text-align:center">
+        <div style="font-size:28px;font-weight:700;color:var(--text);line-height:1.5">${ch.text}</div>
+        <div style="font-size:20px;color:var(--accent);margin-top:8px">= ?</div>
+      </div>
+      <input type="number" id="chi" class="ninp" placeholder="답 입력" style="text-align:center;font-size:24px">
+      <button class="nbtn acc blk mt12" onclick="window._chk()">확인</button>
+      <div class="msgb mt8" id="chm"></div>`;
+    setTimeout(()=>{const e=document.getElementById('chi');if(e)e.focus();},100);
+    window._chk=()=>{
+      const inp=document.getElementById('chi'),val=parseInt(inp.value),m=document.getElementById('chm');
+      if(isNaN(val)){m.textContent='숫자를 입력하세요';return;}
+      if(val===ch.ans){score++;playOK();m.textContent='정답! ✓ ('+ch.ans+')';m.style.color='var(--green)';}
+      else{playNG();m.textContent='틀렸어요. 정답: '+ch.ans;m.style.color='var(--red)';}
+      round++;
+      setTimeout(()=>{if(round>=ROUNDS)showResult(g,score+'/'+ROUNDS+'점',score>=5?'암산 능력이 탁월해요!':'꾸준히 연습해요!','🔗');else render();},1200);
+    };
+  }
+  render();
+}
+
+/* GAME 11: 단어 미로 — 음절 조합 (고난이도) */
+function renderWordMaze(g,body){
+  const wordSets=[
+    {answer:'사과',tiles:['사','과','나','무','바','람'],hint:'🍎 빨간 과일'},
+    {answer:'하늘',tiles:['하','늘','구','름','바','람'],hint:'☁ 위를 봐요'},
+    {answer:'강물',tiles:['강','물','바','다','모','래'],hint:'🌊 흐르는 것'},
+    {answer:'꽃잎',tiles:['꽃','잎','줄','기','뿌','리'],hint:'🌸 꽃의 한 부분'},
+    {answer:'무지개',tiles:['무','지','개','하','늘','빛'],hint:'🌈 비 온 뒤'},
+    {answer:'나비',tiles:['나','비','꽃','향','기','잎'],hint:'🦋 날개 달린 곤충'},
+    {answer:'달빛',tiles:['달','빛','별','하','늘','밤'],hint:'🌙 밤을 밝히는'},
+    {answer:'바람',tiles:['바','람','구','름','하','늘'],hint:'💨 보이지 않지만 느껴지는'},
+  ];
+  const ROUNDS=5;
+  let round=0,score=0,selected=[];
+
+  function getSet(){return wordSets[Math.floor(Math.random()*wordSets.length)];}
+
+  function render(){
+    const ws=getSet();
+    const shuffled=[...ws.tiles].sort(()=>Math.random()-0.5);
+    selected=[];
+    body.innerHTML=`
+      <div class="c ts tc">${round+1} / ${ROUNDS}</div>
+      <div class="pwrap mt8"><div class="pbar" style="width:${round/ROUNDS*100}%"></div></div>
+      <div class="c mt12" style="font-size:15px;font-weight:700;color:var(--text2)">${ws.hint}</div>
+      <div style="background:var(--bg);box-shadow:var(--ni);border-radius:var(--r);padding:16px;margin:12px 0;min-height:60px;display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap" id="selArea">
+        <span style="color:var(--text2);font-size:13px">음절을 선택하세요</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:8px 0" id="tileArea">
+        ${shuffled.map((t,i)=>`<button id="tile${i}" onclick="window._wsel(${i},'${t}')" style="padding:18px 0;border:none;border-radius:var(--rs);background:var(--bg);box-shadow:var(--ns);cursor:pointer;font-size:22px;font-weight:700;color:var(--text);font-family:var(--fn);transition:all 0.15s">${t}</button>`).join('')}
+      </div>
+      <div style="display:flex;gap:10px;margin-top:10px">
+        <button onclick="window._wclear()" style="flex:1;padding:14px 0;border:none;border-radius:var(--rs);background:var(--bg);box-shadow:var(--nb);cursor:pointer;font-size:14px;font-weight:700;color:var(--text2);font-family:var(--fn)">지우기</button>
+        <button onclick="window._wsubmit('${ws.answer}')" style="flex:2;padding:14px 0;border:none;border-radius:var(--rs);background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:4px 4px 12px rgba(74,144,217,0.4);cursor:pointer;font-size:15px;font-weight:700;color:white;font-family:var(--fn)">확인</button>
+      </div>
+      <div class="msgb mt8" id="wmm"></div>`;
+
+    window._wsel=(i,t)=>{
+      selected.push(t);
+      const btn=document.getElementById('tile'+i);
+      if(btn){btn.style.opacity='0.3';btn.style.pointerEvents='none';}
+      const area=document.getElementById('selArea');
+      if(area){area.innerHTML=selected.map(s=>`<span style="font-size:28px;font-weight:700;color:var(--accent)">${s}</span>`).join('');}
+    };
+    window._wclear=()=>{
+      selected=[];
+      document.querySelectorAll('[id^=tile]').forEach(b=>{b.style.opacity='1';b.style.pointerEvents='auto';});
+      const area=document.getElementById('selArea');
+      if(area)area.innerHTML='<span style="color:var(--text2);font-size:13px">음절을 선택하세요</span>';
+    };
+    window._wsubmit=(ans)=>{
+      const m=document.getElementById('wmm');
+      const attempt=selected.join('');
+      if(attempt===ans){score++;playOK();m.textContent='정답! ✓ '+ans;m.style.color='var(--green)';}
+      else if(!attempt){m.textContent='음절을 선택해주세요!';m.style.color='var(--red)';return;}
+      else{playNG();m.textContent='틀렸어요. 정답: '+ans;m.style.color='var(--red)';}
+      round++;
+      setTimeout(()=>{if(round>=ROUNDS)showResult(g,score+'/'+ROUNDS+'점',score>=4?'언어 감각이 뛰어나요!':'꾸준히 연습해요!','🔤');else render();},1300);
+    };
+  }
+  render();
+}
+
+/* GAME 12: 이중 기억 — 숫자+위치 동시 기억 (고난이도) */
+function renderDualBack(g,body){
+  const GRID=6;
+
+  /* ── 설정 화면 ── */
+  function showSettings(){
+    body.innerHTML=`
+      <div class="c" style="font-size:22px;margin:8px 0">🧠 이중 기억 설정</div>
+      <div class="c ts tc" style="color:var(--text2);margin-bottom:20px">난이도를 직접 설정하세요</div>
+
+      <div style="background:var(--bg);box-shadow:var(--ni);border-radius:var(--r);padding:20px;margin-bottom:16px">
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px">표시 칸 수 <span style="font-size:12px;color:var(--text2);font-weight:400">(한 번에 기억할 칸)</span></div>
+        <div style="display:flex;gap:10px;justify-content:center">
+          ${[2,3,4,5].map(n=>`<button id="dopt${n}" onclick="window._dbSetC(${n})" style="width:56px;height:56px;border:none;border-radius:14px;background:${n===3?'var(--accent)':'var(--bg)'};box-shadow:${n===3?'0 4px 14px rgba(74,144,217,0.5)':'var(--ns)'};cursor:pointer;font-size:22px;font-weight:700;color:${n===3?'white':'var(--text)'};font-family:var(--fn);transition:all 0.15s">${n}</button>`).join('')}
+        </div>
+        <div class="c mt12" style="font-size:12px;color:var(--text2)" id="dDesc">3개의 위치와 숫자를 기억합니다</div>
+      </div>
+
+      <div style="background:var(--bg);box-shadow:var(--ni);border-radius:var(--r);padding:20px;margin-bottom:20px">
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px">라운드 수</div>
+        <div style="display:flex;gap:10px;justify-content:center">
+          ${[4,6,8,10].map(r=>`<button id="dropt${r}" onclick="window._dbSetR(${r})" style="width:56px;height:56px;border:none;border-radius:14px;background:${r===6?'var(--accent)':'var(--bg)'};box-shadow:${r===6?'0 4px 14px rgba(74,144,217,0.5)':'var(--ns)'};cursor:pointer;font-size:16px;font-weight:700;color:${r===6?'white':'var(--text)'};font-family:var(--fn);transition:all 0.15s">${r}</button>`).join('')}
+        </div>
+      </div>
+
+      <button onclick="window._dbStart()" class="nbtn acc blk" style="font-size:16px;padding:16px">▶ 시작하기</button>`;
+
+    let selC=3, selR=6;
+    const cDescs={2:'2개의 위치와 숫자를 기억합니다 (쉬움)',3:'3개의 위치와 숫자를 기억합니다',4:'4개의 위치와 숫자를 기억합니다 (어려움)',5:'5개의 위치와 숫자를 기억합니다 (매우 어려움)'};
+
+    window._dbSetC=(n)=>{
+      selC=n;
+      [2,3,4,5].forEach(x=>{
+        const b=document.getElementById('dopt'+x);if(!b)return;
+        const on=(x===n);
+        b.style.background=on?'var(--accent)':'var(--bg)';
+        b.style.color=on?'white':'var(--text)';
+        b.style.boxShadow=on?'0 4px 14px rgba(74,144,217,0.5)':'var(--ns)';
+      });
+      const d=document.getElementById('dDesc');if(d)d.textContent=cDescs[n];
+    };
+    window._dbSetR=(r)=>{
+      selR=r;
+      [4,6,8,10].forEach(x=>{
+        const b=document.getElementById('dropt'+x);if(!b)return;
+        const on=(x===r);
+        b.style.background=on?'var(--accent)':'var(--bg)';
+        b.style.color=on?'white':'var(--text)';
+        b.style.boxShadow=on?'0 4px 14px rgba(74,144,217,0.5)':'var(--ns)';
+      });
+    };
+    window._dbStart=()=>startGame(selC,selR);
+  }
+
+  /* ── 게임 본체 ── */
+  function startGame(COUNT, ROUNDS){
+    let round=0,score=0;
+
+    function genRound(){
+      const usedPos=new Set();
+      const positions=[],digits=[];
+      for(let i=0;i<COUNT;i++){
+        let p;do{p=Math.floor(Math.random()*GRID);}while(usedPos.has(p));
+        usedPos.add(p);positions.push(p);
+        digits.push(Math.floor(Math.random()*9)+1);
+      }
+      return{positions,digits,count:COUNT};
+    }
+
+    function showMemory(rd){
+      body.innerHTML=`
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:13px;color:var(--text2)">${round+1} / ${ROUNDS}</span>
+          <span style="font-size:13px;font-weight:700;color:var(--accent)">기억 단계</span>
+        </div>
+        <div class="pwrap mt4"><div class="pbar" style="width:${round/ROUNDS*100}%"></div></div>
+        <div style="background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:var(--rs);padding:10px 14px;margin:10px 0;text-align:center;color:white;font-size:13px;font-weight:700">
+          📌 ${COUNT}개의 숫자와 위치를 기억하세요!
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:300px;margin:10px auto" id="dg">
+          ${Array.from({length:GRID},(_,i)=>`<div id="dc${i}" style="aspect-ratio:1;border-radius:14px;background:var(--bg);box-shadow:var(--ni);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:white;transition:all 0.3s"></div>`).join('')}
+        </div>
+        <div class="msgb mt8" id="dm" style="font-size:15px"></div>`;
+
+      let step=0;
+      function showNext(){
+        for(let i=0;i<GRID;i++){const el=document.getElementById('dc'+i);if(el){el.style.background='var(--bg)';el.style.boxShadow='var(--ni)';el.textContent='';}}
+        if(step>=rd.count){
+          const dm=document.getElementById('dm');
+          if(dm){dm.textContent='잘 기억하셨나요? 곧 입력합니다...';dm.style.color='var(--text2)';}
+          setTimeout(()=>showInput(rd),1000);return;
+        }
+        const pos=rd.positions[step],num=rd.digits[step];
+        const el=document.getElementById('dc'+pos);
+        if(el){el.style.background='var(--accent)';el.style.boxShadow='0 4px 16px rgba(74,144,217,0.5)';el.textContent=num;}
+        playT(300+num*30,300,'sine',0.25);
+        const dm=document.getElementById('dm');
+        if(dm){dm.textContent=`(${step+1}/${rd.count}) 위치와 숫자를 기억하세요`;dm.style.color='var(--accent)';}
+        step++;
+        setTimeout(showNext,1200);
+      }
+      setTimeout(showNext,300);
+    }
+
+    function showInput(rd){
+      let answers={};
+      let selectedNum=null;
+
+      function build(){
+        body.innerHTML=`
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:13px;color:var(--text2)">${round+1} / ${ROUNDS}</span>
+            <span style="font-size:13px;font-weight:700;color:var(--green)">입력 단계</span>
+          </div>
+          <div class="pwrap mt4"><div class="pbar" style="width:${round/ROUNDS*100}%"></div></div>
+          <div id="guide" style="background:var(--bg);box-shadow:var(--ni);border-radius:var(--rs);padding:10px 14px;margin:10px 0;text-align:center;font-size:13px;font-weight:700;color:var(--accent)">
+            ① 숫자 버튼 선택 → ② 해당 칸에 배치
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:0 0 10px" id="numRow">
+            ${[1,2,3,4,5,6,7,8,9].map(n=>`<button id="nb${n}" onclick="window._dpickNum(${n})" style="padding:12px 0;border:none;border-radius:10px;background:var(--bg);box-shadow:var(--ns);cursor:pointer;font-size:18px;font-weight:700;color:var(--text);font-family:var(--fn);transition:all 0.15s">${n}</button>`).join('')}
+            <button onclick="window._dclear()" style="padding:12px 0;border:none;border-radius:10px;background:var(--bg);box-shadow:var(--ns);cursor:pointer;font-size:12px;font-weight:700;color:var(--red);font-family:var(--fn)">초기화</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:300px;margin:0 auto" id="dg2">
+            ${Array.from({length:GRID},(_,i)=>`<button id="dc2_${i}" onclick="window._dplace(${i})" style="aspect-ratio:1;border:none;border-radius:14px;background:var(--bg);box-shadow:var(--ni);font-size:28px;font-weight:700;color:var(--text);cursor:pointer;font-family:var(--fn);transition:all 0.2s"></button>`).join('')}
+          </div>
+          <button onclick="window._dsubmit()" class="nbtn acc blk" style="margin-top:14px">✅ 입력 완료</button>
+          <div class="msgb mt8" id="dm2"></div>`;
+        refreshNums(); refreshGrid();
+      }
+
+      function refreshNums(){
+        [1,2,3,4,5,6,7,8,9].forEach(n=>{
+          const b=document.getElementById('nb'+n);if(!b)return;
+          const on=(n===selectedNum);
+          b.style.background=on?'var(--accent)':'var(--bg)';
+          b.style.color=on?'white':'var(--text)';
+          b.style.boxShadow=on?'0 4px 12px rgba(74,144,217,0.5)':'var(--ns)';
+          b.style.transform=on?'scale(1.08)':'scale(1)';
+        });
+        const guide=document.getElementById('guide');
+        if(guide)guide.textContent=selectedNum===null?'① 숫자 버튼을 먼저 선택하세요':`"${selectedNum}" 선택됨 → ② 넣을 칸을 탭하세요`;
+      }
+
+      function refreshGrid(){
+        for(let i=0;i<GRID;i++){
+          const b=document.getElementById('dc2_'+i);if(!b)return;
+          if(answers[i]!==undefined){b.style.background='var(--green)';b.style.boxShadow='0 4px 12px rgba(39,174,96,0.4)';b.style.color='white';b.textContent=answers[i];}
+          else{b.style.background='var(--bg)';b.style.boxShadow='var(--ni)';b.style.color='var(--text2)';b.textContent='?';}
+        }
+      }
+
+      window._dpickNum=(n)=>{selectedNum=n;refreshNums();};
+      window._dplace=(pos)=>{
+        if(selectedNum===null){const m=document.getElementById('dm2');if(m){m.textContent='먼저 위에서 숫자를 선택하세요!';m.style.color='var(--red)';}return;}
+        answers[pos]=selectedNum;selectedNum=null;refreshNums();refreshGrid();
+        const m=document.getElementById('dm2');if(m)m.textContent='';
+      };
+      window._dclear=()=>{answers={};selectedNum=null;refreshNums();refreshGrid();};
+      window._dsubmit=()=>{
+        if(Object.keys(answers).length===0){const m=document.getElementById('dm2');if(m){m.textContent='숫자를 입력해주세요!';m.style.color='var(--red)';}return;}
+        let correct=0;
+        for(let i=0;i<rd.count;i++){if(answers[rd.positions[i]]===rd.digits[i])correct++;}
+        score+=correct;
+        for(let i=0;i<rd.count;i++){
+          const b=document.getElementById('dc2_'+rd.positions[i]);if(!b)continue;
+          b.style.background=(answers[rd.positions[i]]===rd.digits[i])?'var(--green)':'var(--red)';
+          b.textContent=rd.digits[i];
+        }
+        const m=document.getElementById('dm2');
+        if(correct===rd.count){playOK();if(m){m.textContent=`완벽! ${rd.count}칸 모두 정답! 🎉`;m.style.color='var(--green)';}}
+        else{playNG();if(m){m.textContent=`${correct}/${rd.count} 정답 — 빨간칸이 정답이에요`;m.style.color='var(--red)';}}
+        round++;
+        setTimeout(()=>{
+          if(round>=ROUNDS)showResult(g,score+'점',score>=Math.floor(ROUNDS*COUNT*0.7)?'이중 기억력이 탁월해요!':'꾸준히 연습해요!','🧠');
+          else showMemory(genRound());
+        },1800);
+      };
+
+      build();
+    }
+
+    showMemory(genRound());
+  }
+
+  showSettings();
 }
 
 init();
