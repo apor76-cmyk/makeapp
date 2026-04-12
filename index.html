@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>뇌 건강 관리 프로그램</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+:root {
+  --bg: #e0e5ec;
+  --bg2: #d1d9e6;
+  --surface: #e0e5ec;
+  --text: #31456a;
+  --text2: #6b7a99;
+  --accent: #4a90d9;
+  --accent2: #3578c4;
+  --green: #27ae60;
+  --red: #e74c3c;
+  --yellow: #f39c12;
+  --shadow-light: rgba(255,255,255,0.9);
+  --shadow-dark: rgba(163,177,198,0.7);
+  --neu-shadow: 6px 6px 14px var(--shadow-dark), -6px -6px 14px var(--shadow-light);
+  --neu-inset: inset 4px 4px 10px var(--shadow-dark), inset -4px -4px 10px var(--shadow-light);
+  --neu-btn: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light);
+  --neu-btn-press: inset 3px 3px 7px var(--shadow-dark), inset -3px -3px 7px var(--shadow-light);
+  --radius: 18px;
+  --radius-sm: 12px;
+  --font: 'Noto Sans KR', sans-serif;
+  --transition: 0.2s ease;
+}
+
+[data-theme="dark"] {
+  --bg: #1e2330;
+  --bg2: #252c3e;
+  --surface: #1e2330;
+  --text: #c8d4f0;
+  --text2: #6b7ea8;
+  --shadow-light: rgba(46,55,80,0.8);
+  --shadow-dark: rgba(10,12,20,0.9);
+  --neu-shadow: 6px 6px 14px var(--shadow-dark), -6px -6px 14px var(--shadow-light);
+  --neu-inset: inset 4px 4px 10px var(--shadow-dark), inset -4px -4px 10px var(--shadow-light);
+  --neu-btn: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light);
+  --neu-btn-press: inset 3px 3px 7px var(--shadow-dark), inset -3px -3px 7px var(--shadow-light);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  width: 100%; min-height: 100vh;
+  background: var(--bg);
+  font-family: var(--font);
+  color: var(--text);
+  transition: background var(--transition), color var(--transition);
+  overflow-x: hidden;
+}
+
+/* ─── APP SHELL ─── */
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0;
+  min-height: 100vh;
+  position: relative;
+  background: var(--bg);
+}
+
+/* ─── SCREENS ─── */
+.screen {
+  display: none;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+  padding: 0 0 80px 0;
+}
+.screen.active { display: flex; }
+
+/* ─── HEADER ─── */
+.header {
+  background: var(--bg);
+  padding: 20px 20px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.header-title { font-size: 18px; font-weight: 700; color: var(--text); }
+.header-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+/* ─── THEME TOGGLE ─── */
+.theme-btn {
+  width: 46px; height: 26px;
+  background: var(--bg);
+  border: none;
+  border-radius: 13px;
+  box-shadow: var(--neu-inset);
+  position: relative;
+  cursor: pointer;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+.theme-btn::after {
+  content: '';
+  position: absolute;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  top: 3px;
+  background: var(--accent);
+  box-shadow: 2px 2px 5px var(--shadow-dark);
+  transition: all var(--transition);
+}
+[data-theme="light"] .theme-btn::after { left: 3px; background: #f39c12; content: '☀'; font-size: 12px; display:flex; align-items:center; justify-content:center; color:white; }
+[data-theme="dark"] .theme-btn::after { left: 23px; background: #3a4f82; content: '🌙'; font-size: 11px; display:flex; align-items:center; justify-content:center; color:white; }
+
+/* ─── NEU CARD ─── */
+.neu-card {
+  background: var(--bg);
+  border-radius: var(--radius);
+  box-shadow: var(--neu-shadow);
+  transition: box-shadow var(--transition);
+}
+
+/* ─── STATS ─── */
+.stats-wrap { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; padding: 16px 16px 8px; }
+.stat-card {
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--neu-shadow);
+  padding: 14px 8px;
+  text-align: center;
+}
+.stat-val { font-size: 22px; font-weight: 700; color: var(--accent); }
+.stat-lbl { font-size: 11px; color: var(--text2); margin-top: 3px; }
+
+/* ─── SECTION TITLE ─── */
+.sec-title {
+  font-size: 14px; font-weight: 700; color: var(--text2);
+  padding: 16px 20px 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ─── GAME GRID ─── */
+.game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 0 16px; }
+.game-card {
+  background: var(--bg);
+  border-radius: var(--radius);
+  box-shadow: var(--neu-shadow);
+  padding: 16px 12px;
+  cursor: pointer;
+  transition: box-shadow var(--transition), transform 0.1s;
+  position: relative;
+  overflow: hidden;
+}
+.game-card:active { box-shadow: var(--neu-btn-press); transform: scale(0.97); }
+.game-card.done { background: var(--bg); }
+.game-card.done::before {
+  content: '✓';
+  position: absolute; top: 8px; right: 10px;
+  font-size: 14px; color: var(--green); font-weight: 700;
+}
+.gc-icon {
+  width: 44px; height: 44px;
+  border-radius: 14px;
+  background: var(--bg);
+  box-shadow: var(--neu-shadow);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+.gc-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.gc-desc { font-size: 11px; color: var(--text2); line-height: 1.5; }
+.gc-done-badge { font-size: 11px; color: var(--green); font-weight: 700; margin-top: 8px; }
+
+/* ─── NEU BUTTON ─── */
+.neu-btn {
+  background: var(--bg);
+  border: none;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--neu-btn);
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: var(--font);
+}
+.neu-btn:active { box-shadow: var(--neu-btn-press); transform: scale(0.97); }
+.neu-btn.primary { color: var(--accent); }
+.neu-btn.block { width: 100%; display: block; margin-top: 10px; }
+.neu-btn.accent {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: white;
+  box-shadow: 4px 4px 12px rgba(74,144,217,0.4), -2px -2px 8px var(--shadow-light);
+}
+.neu-btn.accent:active { box-shadow: inset 3px 3px 8px rgba(0,0,0,0.3); }
+
+/* ─── NEU INPUT ─── */
+.neu-input {
+  width: 100%;
+  background: var(--bg);
+  border: none;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--neu-inset);
+  padding: 14px 16px;
+  font-size: 16px;
+  color: var(--text);
+  font-family: var(--font);
+  outline: none;
+}
+.neu-input:focus { box-shadow: var(--neu-inset), 0 0 0 2px var(--accent); }
+
+/* ─── TOGGLE SWITCH ─── */
+.toggle-wrap { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; }
+.toggle-label { font-size: 14px; color: var(--text); font-weight: 500; }
+.toggle {
+  width: 52px; height: 28px;
+  background: var(--bg);
+  border: none;
+  border-radius: 14px;
+  box-shadow: var(--neu-inset);
+  position: relative;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.toggle::after {
+  content: '';
+  position: absolute;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  top: 3px; left: 3px;
+  background: var(--text2);
+  box-shadow: 2px 2px 5px var(--shadow-dark);
+  transition: all var(--transition);
+}
+.toggle.on::after { left: 27px; background: var(--green); }
+
+/* ─── TIME CHIPS ─── */
+.time-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 16px 16px; }
+.time-chip {
+  background: var(--bg);
+  border: none;
+  border-radius: 20px;
+  box-shadow: var(--neu-btn);
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: var(--font);
+}
+.time-chip.active { color: var(--accent); font-weight: 700; }
+.time-chip:active { box-shadow: var(--neu-btn-press); }
+
+/* ─── LOG LIST ─── */
+.log-wrap { padding: 0 16px; }
+.log-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(127,127,127,0.1);
+  font-size: 13px;
+}
+.log-item:last-child { border-bottom: none; }
+.log-game { color: var(--text); }
+.log-time { color: var(--text2); font-size: 11px; }
+.log-score { color: var(--green); font-weight: 700; }
+.log-empty { text-align: center; padding: 24px; color: var(--text2); font-size: 13px; }
+
+/* ─── BOTTOM NAV ─── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 480px;
+  background: var(--bg);
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+  display: flex;
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 12px 4px 10px;
+  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  font-family: var(--font);
+  transition: all var(--transition);
+}
+.nav-btn .nav-icon {
+  width: 36px; height: 36px;
+  border-radius: 12px;
+  background: var(--bg);
+  box-shadow: var(--neu-btn);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  transition: all var(--transition);
+}
+.nav-btn.active .nav-icon {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  box-shadow: 3px 3px 8px rgba(74,144,217,0.4);
+}
+.nav-btn .nav-lbl { font-size: 10px; color: var(--text2); font-weight: 500; }
+.nav-btn.active .nav-lbl { color: var(--accent); font-weight: 700; }
+
+/* ─── GAME SCREEN (FULLSCREEN) ─── */
+#game-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--bg);
+  display: none;
+  flex-direction: column;
+  overflow-y: auto;
+}
+#game-screen.active { display: flex; }
+
+.game-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px;
+  background: var(--bg);
+  position: sticky; top: 0; z-index: 10;
+}
+.back-btn {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  background: var(--bg);
+  border: none;
+  box-shadow: var(--neu-btn);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--transition);
+}
+.back-btn:active { box-shadow: var(--neu-btn-press); }
+.game-title { font-size: 18px; font-weight: 700; color: var(--text); }
+
+.game-body { flex: 1; padding: 16px 20px 40px; display: flex; flex-direction: column; }
+
+/* ─── RESULT OVERLAY ─── */
+#result-screen {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,0.5);
+  display: none; align-items: center; justify-content: center;
+  padding: 20px;
+}
+#result-screen.active { display: flex; }
+.result-card {
+  background: var(--bg);
+  border-radius: 28px;
+  box-shadow: var(--neu-shadow);
+  padding: 32px 24px;
+  width: 100%; max-width: 340px;
+  text-align: center;
+}
+.result-emoji { font-size: 56px; margin-bottom: 12px; }
+.result-score { font-size: 40px; font-weight: 700; color: var(--accent); }
+.result-msg { font-size: 15px; color: var(--text2); margin-top: 8px; }
+
+/* ─── TOAST ─── */
+#toast {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+  background: var(--accent);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 20px;
+  font-size: 13px; font-weight: 500;
+  z-index: 999;
+  display: none;
+  white-space: nowrap;
+  box-shadow: 4px 4px 12px rgba(74,144,217,0.4);
+  max-width: 90vw;
+}
+
+/* ─── PROGRESS BAR ─── */
+.progress-wrap {
+  background: var(--bg);
+  border-radius: 6px;
+  box-shadow: var(--neu-inset);
+  height: 10px;
+  overflow: hidden;
+  margin: 12px 0;
+}
+.progress-bar {
+  height: 10px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--accent), var(--green));
+  transition: width 0.5s ease;
+}
+
+/* ─── MEMORY GAME ─── */
+.mem-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 320px; margin: 0 auto 20px; }
+.mem-btn {
+  height: 100px;
+  border: none;
+  border-radius: var(--radius);
+  box-shadow: var(--neu-shadow);
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  transition: all 0.15s;
+  font-family: var(--font);
+}
+.mem-btn:active { box-shadow: var(--neu-btn-press); transform: scale(0.95); }
+
+/* ─── SUDOKU ─── */
+.sudoku-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; max-width: 280px; margin: 0 auto 20px; }
+.sudoku-cell {
+  aspect-ratio: 1;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  background: var(--bg);
+  box-shadow: var(--neu-inset);
+  color: var(--text);
+  font-family: var(--font);
+  outline: none;
+  cursor: pointer;
+}
+.sudoku-cell[readonly] {
+  box-shadow: var(--neu-shadow);
+  color: var(--accent);
+}
+
+/* ─── COLOR CIRCLES (Sound color game) ─── */
+.color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 0 auto 20px; }
+.color-btn {
+  height: 90px;
+  border: none;
+  border-radius: var(--radius);
+  box-shadow: var(--neu-shadow);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 700;
+  color: white;
+  transition: all 0.15s;
+  font-family: var(--font);
+}
+.color-btn:active { box-shadow: var(--neu-btn-press); transform: scale(0.95); }
+.color-btn.lit { filter: brightness(1.5); box-shadow: 0 0 20px currentColor; }
+
+/* ─── REACTION ─── */
+.react-box {
+  border-radius: var(--radius);
+  box-shadow: var(--neu-shadow);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  height: 200px;
+  font-size: 24px;
+  font-weight: 700;
+  transition: background 0.1s;
+  user-select: none;
+}
+.react-box.wait { background: var(--bg); color: var(--text2); }
+.react-box.ready { background: #e74c3c; color: white; }
+.react-box.go { background: #27ae60; color: white; }
+
+/* ─── PATTERN TILES ─── */
+.pattern-tiles { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 24px 0; }
+.pattern-tile {
+  background: var(--bg);
+  box-shadow: var(--neu-shadow);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+.pattern-tile.ans { background: var(--accent); color: white; }
+
+/* ─── WORD CHAIN ─── */
+.word-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.word-chip {
+  background: var(--bg);
+  box-shadow: var(--neu-shadow);
+  border-radius: 20px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+.word-chip.current { background: var(--accent); color: white; box-shadow: 3px 3px 8px rgba(74,144,217,0.4); }
+
+/* ─── HAND EXERCISE ─── */
+.hand-icon { font-size: 80px; text-align: center; margin: 20px 0; animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+
+/* ─── PITCH GAME ─── */
+.pitch-note {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 700;
+  color: white;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  box-shadow: var(--neu-shadow);
+  font-family: var(--font);
+}
+.pitch-note:active { transform: scale(0.9); box-shadow: var(--neu-btn-press); }
+
+/* ─── RHYTHM GAME ─── */
+.rhythm-lane {
+  height: 60px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  box-shadow: var(--neu-inset);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+.rhythm-dot {
+  position: absolute;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  top: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  box-shadow: 0 0 12px rgba(74,144,217,0.6);
+  animation: fall 1.5s linear;
+}
+@keyframes fall { from{left:-50px} to{left:calc(100% + 50px)} }
+
+/* ─── SOUND MATCH GAME ─── */
+.sound-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+.sound-card {
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  box-shadow: var(--neu-shadow);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+}
+.sound-card:active { box-shadow: var(--neu-btn-press); transform: scale(0.95); }
+.sound-card.flipped { background: var(--accent); color: white; box-shadow: 3px 3px 10px rgba(74,144,217,0.4); }
+.sound-card.matched { background: #27ae60; color: white; box-shadow: 3px 3px 10px rgba(39,174,96,0.4); }
+
+/* ─── MISC ─── */
+.center { text-align: center; }
+.mt8 { margin-top: 8px; }
+.mt12 { margin-top: 12px; }
+.mt16 { margin-top: 16px; }
+.mt20 { margin-top: 20px; }
+.text-sm { font-size: 13px; }
+.text-xs { font-size: 11px; }
+.text-lg { font-size: 18px; }
+.text-xl { font-size: 28px; }
+.text-2xl { font-size: 36px; }
+.text-secondary { color: var(--text2); }
+.text-accent { color: var(--accent); }
+.text-green { color: var(--green); }
+.text-red { color: var(--red); }
+.bold { font-weight: 700; }
+.msg-box {
+  text-align: center;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 700;
+  min-height: 40px;
+}
+
+/* ─── NOTIF SECTION ─── */
+.notif-section { padding: 0 16px 16px; }
+.notif-card {
+  background: var(--bg);
+  border-radius: var(--radius);
+  box-shadow: var(--neu-shadow);
+  overflow: hidden;
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="toast"></div>
+
+  <!-- ══════════════ HOME SCREEN ══════════════ -->
+  <div id="screen-home" class="screen active">
+    <div class="header">
+      <div>
+        <div class="header-title">🧠 뇌 건강 관리</div>
+        <div class="header-sub" id="today-date"></div>
+      </div>
+      <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="다크/라이트 모드"></button>
+    </div>
+
+    <div class="stats-wrap">
+      <div class="stat-card"><div class="stat-val" id="stat-done">0/10</div><div class="stat-lbl">오늘 완료</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-streak">0일</div><div class="stat-lbl">연속 일수</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-total">0</div><div class="stat-lbl">총 완료</div></div>
+    </div>
+
+    <div class="sec-title">오늘의 두뇌 운동</div>
+    <div class="game-grid" id="game-grid"></div>
+
+    <div style="height:16px"></div>
+  </div>
+
+  <!-- ══════════════ SETTINGS SCREEN ══════════════ -->
+  <div id="screen-settings" class="screen">
+    <div class="header">
+      <div>
+        <div class="header-title">⚙️ 설정</div>
+        <div class="header-sub">알림 및 테마 설정</div>
+      </div>
+      <button class="theme-btn" id="theme-btn2" onclick="toggleTheme()"></button>
+    </div>
+
+    <div class="notif-section">
+      <div class="notif-card">
+        <div class="toggle-wrap">
+          <span class="toggle-label">매일 알림</span>
+          <button class="toggle" id="notif-toggle" onclick="toggleNotif(this)"></button>
+        </div>
+        <div style="padding:0 16px 12px;font-size:12px;color:var(--text2)">알림 시간을 탭하면 삭제됩니다</div>
+        <div class="time-chips" id="notif-times"></div>
+        <div style="padding:0 16px 16px">
+          <button class="neu-btn block" onclick="addCustomTime()">+ 시간 추가</button>
+        </div>
+      </div>
+
+      <div style="height:16px"></div>
+
+      <div class="notif-card">
+        <div style="padding:16px;font-size:14px;font-weight:700;color:var(--text)">테마 설정</div>
+        <div style="padding:0 16px 16px;display:flex;gap:12px">
+          <button class="neu-btn" style="flex:1" onclick="setTheme('light')">☀️ 라이트</button>
+          <button class="neu-btn" style="flex:1" onclick="setTheme('dark')">🌙 다크</button>
+        </div>
+      </div>
+
+      <div style="height:16px"></div>
+
+      <div class="notif-card">
+        <div style="padding:16px;font-size:14px;font-weight:700;color:var(--text)">데이터 관리</div>
+        <div style="padding:0 16px 16px">
+          <button class="neu-btn block" style="color:var(--red)" onclick="resetData()">기록 초기화</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ LOG SCREEN ══════════════ -->
+  <div id="screen-log" class="screen">
+    <div class="header">
+      <div>
+        <div class="header-title">📋 실행 기록</div>
+        <div class="header-sub">최근 활동 내역</div>
+      </div>
+      <button class="theme-btn" onclick="toggleTheme()"></button>
+    </div>
+    <div class="log-wrap" id="log-list"></div>
+    <div id="log-empty" class="log-empty">아직 기록이 없습니다 🌱</div>
+  </div>
+
+  <!-- ══════════════ GAME SCREEN (FULLSCREEN) ══════════════ -->
+  <div id="game-screen">
+    <div class="game-header">
+      <button class="back-btn" onclick="closeGame()">←</button>
+      <div class="game-title" id="game-screen-title"></div>
+    </div>
+    <div class="game-body" id="game-body"></div>
+  </div>
+
+  <!-- ══════════════ RESULT OVERLAY ══════════════ -->
+  <div id="result-screen">
+    <div class="result-card">
+      <div class="result-emoji" id="result-emoji">🎉</div>
+      <div class="result-score" id="result-score">100점</div>
+      <div class="result-msg" id="result-msg">훌륭해요!</div>
+      <button class="neu-btn accent block" style="margin-top:24px" onclick="closeResult()">확인</button>
+    </div>
+  </div>
+
+  <!-- ══════════════ BOTTOM NAV ══════════════ -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="nav-home" onclick="showTab('home')">
+      <div class="nav-icon">🏠</div>
+      <span class="nav-lbl">홈</span>
+    </button>
+    <button class="nav-btn" id="nav-settings" onclick="showTab('settings')">
+      <div class="nav-icon">⚙️</div>
+      <span class="nav-lbl">설정</span>
+    </button>
+    <button class="nav-btn" id="nav-log" onclick="showTab('log')">
+      <div class="nav-icon">📋</div>
+      <span class="nav-lbl">기록</span>
+    </button>
+  </nav>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+const games = [
+  {id:'memory',   name:'색상 기억',    icon:'🎨', desc:'색깔·소리 순서를 기억하고 따라 클릭'},
+  {id:'sudoku',   name:'쉬운 스도쿠',  icon:'🔢', desc:'4×4 퍼즐로 논리력을 키우세요'},
+  {id:'math',     name:'두뇌 산수',    icon:'🧮', desc:'덧셈 뺄셈 5문제 도전'},
+  {id:'hand',     name:'손 운동',      icon:'✋', desc:'화면 지시에 따라 손가락 운동'},
+  {id:'word',     name:'끝말잇기',     icon:'💬', desc:'단어 5번 이어가기 도전'},
+  {id:'pattern',  name:'패턴 찾기',    icon:'🔷', desc:'숫자·도형 패턴 다음 순서 맞히기'},
+  {id:'reaction', name:'반응 속도',    icon:'⚡', desc:'초록불이 켜지면 즉시 탭하세요'},
+  {id:'pitch',    name:'음정 맞추기',  icon:'🎵', desc:'들려주는 음과 같은 음을 골라보세요'},
+  {id:'rhythm',   name:'리듬 박자',    icon:'🥁', desc:'흘러오는 박자에 맞춰 탭하세요'},
+  {id:'soundmatch',name:'소리 기억',   icon:'🔊', desc:'같은 소리 카드 짝 맞추기'},
+];
+
+const defaultTimes = ['09:00','13:00','19:00'];
+let state = {done:[], log:[], streak:0, total:0, times:[...defaultTimes], notifOn:true};
+
+try { const s=localStorage.getItem('brain_v2'); if(s) state=JSON.parse(s); } catch(e){}
+
+const savedTheme = localStorage.getItem('brain_theme') || 'light';
+document.documentElement.setAttribute('data-theme', savedTheme);
+
+function save() { try { localStorage.setItem('brain_v2', JSON.stringify(state)); } catch(e){} }
+function today() { return new Date().toISOString().slice(0,10); }
+
+// ══════════════════════════════════════════════
+// THEME
+// ══════════════════════════════════════════════
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  setTheme(cur === 'light' ? 'dark' : 'light');
+}
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('brain_theme', t);
+}
+
+// ══════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════
+function showTab(tab) {
+  ['home','settings','log'].forEach(t => {
+    document.getElementById('screen-'+t).classList.toggle('active', t===tab);
+    document.getElementById('nav-'+t).classList.toggle('active', t===tab);
+  });
+  if(tab==='log') renderLog();
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+function init() {
+  document.getElementById('today-date').textContent =
+    new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  checkStreak();
+  renderGames();
+  renderStats();
+  renderTimes();
+  updateNotifToggle();
+  setInterval(checkAlerts, 30000);
+  checkAlerts();
+}
+
+function checkStreak() {
+  const t = today();
+  const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
+  const hasTodayDone = state.log.some(l=>l.date===t);
+  const hasYesterdayDone = state.log.some(l=>l.date===yesterday);
+  if(!hasTodayDone && !hasYesterdayDone && state.streak>0) { state.streak=0; save(); }
+}
+
+function renderStats() {
+  const t = today();
+  const todayDone = state.log.filter(l=>l.date===t).length;
+  document.getElementById('stat-done').textContent = todayDone+'/'+games.length;
+  document.getElementById('stat-streak').textContent = state.streak+'일';
+  document.getElementById('stat-total').textContent = state.total;
+}
+
+function renderGames() {
+  const t = today();
+  const doneIds = state.log.filter(l=>l.date===t).map(l=>l.id);
+  const grid = document.getElementById('game-grid');
+  grid.innerHTML = games.map(g => {
+    const done = doneIds.includes(g.id);
+    return `<div class="game-card ${done?'done':''}" onclick="openGame('${g.id}')">
+      <div class="gc-icon">${g.icon}</div>
+      <div class="gc-name">${g.name}</div>
+      <div class="gc-desc">${g.desc}</div>
+      ${done ? '<div class="gc-done-badge">✓ 완료!</div>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderLog() {
+  const list = document.getElementById('log-list');
+  const empty = document.getElementById('log-empty');
+  const recent = [...state.log].reverse().slice(0,30);
+  if(!recent.length) { list.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display = 'none';
+  list.innerHTML = recent.map(l => {
+    const g = games.find(x=>x.id===l.id);
+    return `<div class="log-item">
+      <span class="log-game">${g?g.icon:''} ${l.name}</span>
+      <div style="text-align:right">
+        <div class="log-score">${l.score}</div>
+        <div class="log-time">${l.date} ${l.time}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderTimes() {
+  const el = document.getElementById('notif-times');
+  el.innerHTML = state.times.map(t =>
+    `<button class="time-chip active" onclick="removeTime('${t}')" title="탭하면 삭제">${t}</button>`
+  ).join('');
+}
+
+function addCustomTime() {
+  const t = prompt('알림 시간 입력 (예: 08:30)');
+  if(t && /^\d{2}:\d{2}$/.test(t) && !state.times.includes(t)) {
+    state.times.push(t); state.times.sort(); save(); renderTimes();
+  }
+}
+function removeTime(t) { state.times=state.times.filter(x=>x!==t); save(); renderTimes(); }
+
+function updateNotifToggle() {
+  const btn = document.getElementById('notif-toggle');
+  if(btn) btn.classList.toggle('on', state.notifOn);
+}
+function toggleNotif(btn) {
+  state.notifOn = !state.notifOn; save();
+  btn.classList.toggle('on', state.notifOn);
+}
+
+function resetData() {
+  if(!confirm('모든 기록을 초기화할까요?')) return;
+  state = {done:[], log:[], streak:0, total:0, times:[...defaultTimes], notifOn:true};
+  save(); renderGames(); renderStats(); renderLog(); showToast('초기화 완료!');
+}
+
+let lastAlertMin = '';
+function checkAlerts() {
+  if(!state.notifOn) return;
+  const now = new Date();
+  const hm = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  if(state.times.includes(hm) && hm!==lastAlertMin) {
+    lastAlertMin = hm;
+    showToast('🔔 두뇌 운동 시간이에요!');
+  }
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(()=>el.style.display='none', 3500);
+}
+
+// ══════════════════════════════════════════════
+// GAME SCREEN
+// ══════════════════════════════════════════════
+function openGame(id) {
+  const g = games.find(x=>x.id===id);
+  document.getElementById('game-screen').classList.add('active');
+  document.getElementById('game-screen-title').textContent = g.icon+' '+g.name;
+  const body = document.getElementById('game-body');
+  body.innerHTML = '';
+
+  if(id==='memory')    renderMemory(g, body);
+  else if(id==='sudoku')    renderSudoku(g, body);
+  else if(id==='math')      renderMath(g, body);
+  else if(id==='hand')      renderHand(g, body);
+  else if(id==='word')      renderWord(g, body);
+  else if(id==='pattern')   renderPattern(g, body);
+  else if(id==='reaction')  renderReaction(g, body);
+  else if(id==='pitch')     renderPitch(g, body);
+  else if(id==='rhythm')    renderRhythm(g, body);
+  else if(id==='soundmatch')renderSoundMatch(g, body);
+}
+
+function closeGame() {
+  document.getElementById('game-screen').classList.remove('active');
+  // cleanup audio
+  if(window._audioCleanup) { window._audioCleanup(); window._audioCleanup=null; }
+}
+
+function addLog(g, score) {
+  const t = today();
+  const now = new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+  const alreadyDone = state.log.some(l=>l.date===t && l.id===g.id);
+  if(alreadyDone) return;
+  state.log.push({id:g.id, name:g.name, date:t, time:now, score});
+  state.total++;
+  const todayCount = state.log.filter(l=>l.date===t).length;
+  if(todayCount===1) {
+    const yest = new Date(Date.now()-86400000).toISOString().slice(0,10);
+    state.streak = state.log.some(l=>l.date===yest) ? state.streak+1 : 1;
+  }
+  if(todayCount===games.length) showToast('🎉 오늘 모든 운동 완료! 훌륭해요!');
+  save(); renderStats(); renderGames();
+}
+
+function showResult(g, score, msg, emoji='🎉') {
+  addLog(g, score);
+  document.getElementById('result-emoji').textContent = emoji;
+  document.getElementById('result-score').textContent = score;
+  document.getElementById('result-msg').textContent = msg;
+  document.getElementById('result-screen').classList.add('active');
+}
+
+function closeResult() {
+  document.getElementById('result-screen').classList.remove('active');
+  closeGame();
+}
+
+// ══════════════════════════════════════════════
+// AUDIO HELPER
+// ══════════════════════════════════════════════
+function getAudio() {
+  if(!window._ac) window._ac = new (window.AudioContext||window.webkitAudioContext)();
+  return window._ac;
+}
+function playTone(freq, dur=250, type='sine', vol=0.3) {
+  const ac = getAudio();
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.connect(g); g.connect(ac.destination);
+  o.type = type;
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur/1000);
+  o.start(); o.stop(ac.currentTime + dur/1000);
+}
+function playSuccess() { playTone(523,150); setTimeout(()=>playTone(659,150),160); setTimeout(()=>playTone(784,300),320); }
+function playFail()    { playTone(200,400,'sawtooth',0.2); }
+function playClick(i)  { const freqs=[330,440,550,660,494,392]; playTone(freqs[i%6],200,'triangle'); }
+
+// ══════════════════════════════════════════════
+// GAME 1: COLOR MEMORY
+// ══════════════════════════════════════════════
+function renderMemory(g, body) {
+  const colors = [{c:'#e74c3c',n:'빨강'},{c:'#3498db',n:'파랑'},{c:'#27ae60',n:'초록'},{c:'#f39c12',n:'노랑'}];
+  const freqs = [330,440,550,660];
+  let seq=[], userSeq=[], level=1, showing=false;
+
+  body.innerHTML = `
+    <div class="center text-secondary text-sm" id="mem-msg">시작 버튼을 눌러주세요</div>
+    <div style="text-align:center;margin:8px 0;font-size:14px;color:var(--text2)">레벨 <span id="mem-lv">1</span></div>
+    <div class="mem-btns">
+      ${colors.map((c,i)=>`<button class="mem-btn" id="mb${i}" onclick="window._mClick(${i})" style="background:${c.c}">${c.n}</button>`).join('')}
+    </div>
+    <button class="neu-btn accent block" onclick="window._mStart()">시작</button>`;
+
+  function setMsg(m) { const el=document.getElementById('mem-msg'); if(el) el.textContent=m; }
+  function setLv(l)  { const el=document.getElementById('mem-lv'); if(el) el.textContent=l; }
+  function flash(i, cb) {
+    const btn=document.getElementById('mb'+i); if(!btn) return cb&&cb();
+    btn.style.filter='brightness(1.8)'; btn.style.transform='scale(0.95)';
+    playTone(freqs[i],300,'sine');
+    setTimeout(()=>{btn.style.filter=''; btn.style.transform=''; cb&&cb();},400);
+  }
+  function setBtns(on) { colors.forEach((_,i)=>{ const b=document.getElementById('mb'+i); if(b) b.style.pointerEvents=on?'auto':'none'; }); }
+  function showSeq() {
+    showing=true; setBtns(false); let i=0;
+    function next(){if(i>=seq.length){showing=false;setBtns(true);setMsg('이제 순서대로 탭!');return;}flash(seq[i],()=>{i++;setTimeout(next,200);});}
+    setTimeout(next,600);
+  }
+  function addStep() { seq.push(Math.floor(Math.random()*4)); userSeq=[]; setMsg('잘 봐요!'); showSeq(); }
+  window._mStart = ()=>{ seq=[]; userSeq=[]; level=1; setLv(1); addStep(); };
+  window._mClick = (i)=>{
+    if(showing) return; flash(i); userSeq.push(i);
+    const pos=userSeq.length-1;
+    if(userSeq[pos]!==seq[pos]) { playFail(); setMsg('틀렸어요! 다시 시작...'); setTimeout(()=>{seq=[];userSeq=[];level=1;setLv(1);setTimeout(addStep,800);},1200); return; }
+    if(userSeq.length===seq.length) {
+      level++; setLv(level); playSuccess(); setMsg('정답! 레벨 '+level+' 시작...');
+      if(level>7){showResult(g,'레벨 '+level,'색상 기억력이 뛰어나요!','🎨');return;}
+      setTimeout(addStep,900);
+    }
+  };
+}
+
+// ══════════════════════════════════════════════
+// GAME 2: SUDOKU
+// ══════════════════════════════════════════════
+function renderSudoku(g, body) {
+  const puzzles = [
+    {q:[[1,0,3,0],[0,3,0,1],[3,0,1,0],[0,1,0,3]],a:[[1,2,3,4],[4,3,2,1],[3,4,1,2],[2,1,4,3]]},
+    {q:[[0,2,0,4],[4,0,2,0],[0,4,0,2],[2,0,4,0]],a:[[1,2,3,4],[4,3,2,1],[3,4,1,2],[2,1,4,3]]},
+    {q:[[0,1,0,2],[2,0,1,0],[0,2,0,1],[1,0,2,0]],a:[[3,1,4,2],[2,4,1,3],[4,2,3,1],[1,3,2,4]]},
+  ];
+  const p = puzzles[Math.floor(Math.random()*puzzles.length)];
+  let cells = p.q.map(r=>[...r]);
+
+  body.innerHTML = `
+    <div class="center text-secondary text-sm mt8">1~4를 채워 행·열·2×2박스에 중복 없이!</div>
+    <div class="sudoku-grid mt16" id="sudo-grid"></div>
+    <button class="neu-btn accent block mt12" onclick="window._sudoCheck()">정답 확인</button>
+    <div class="msg-box mt8" id="sudo-msg"></div>`;
+
+  const grid = document.getElementById('sudo-grid');
+  grid.innerHTML = cells.map((row,r)=>row.map((v,c)=>{
+    const fixed=p.q[r][c]!==0;
+    return `<input type="number" min="1" max="4" value="${v||''}" ${fixed?'readonly':''} id="sc${r}${c}"
+      class="sudoku-cell" oninput="window._sudoInput(${r},${c},this.value)">`;
+  }).join('')).join('');
+
+  window._sudoInput = (r,c,v)=>{ cells[r][c]=parseInt(v)||0; };
+  window._sudoCheck = ()=>{
+    let ok=true;
+    for(let r=0;r<4;r++) for(let c=0;c<4;c++) {
+      const inp=document.getElementById('sc'+r+c);
+      const correct=cells[r][c]===p.a[r][c];
+      if(inp&&!p.q[r][c]) inp.style.boxShadow=correct?'inset 3px 3px 6px rgba(39,174,96,0.4)':'inset 3px 3px 6px rgba(231,76,60,0.4)';
+      if(!correct) ok=false;
+    }
+    const m=document.getElementById('sudo-msg');
+    if(ok){ playSuccess(); m.textContent='완벽해요! 🎉'; m.style.color='var(--green)'; setTimeout(()=>showResult(g,'100점','논리력이 훌륭해요!','🔢'),800);}
+    else{ playFail(); m.textContent='빨간 칸을 확인해보세요'; m.style.color='var(--red)'; }
+  };
+}
+
+// ══════════════════════════════════════════════
+// GAME 3: MATH
+// ══════════════════════════════════════════════
+function renderMath(g, body) {
+  const ops=['+','-','×'];
+  let qs=[], idx=0, score=0;
+  function makeQ(){
+    const op=ops[Math.floor(Math.random()*3)];
+    let a=Math.floor(Math.random()*15)+2, b=Math.floor(Math.random()*10)+1;
+    if(op==='-'&&b>a)[a,b]=[b,a];
+    const ans=op==='+'?a+b:op==='-'?a-b:a*b;
+    return{q:`${a} ${op} ${b} = ?`, ans};
+  }
+  for(let i=0;i<5;i++) qs.push(makeQ());
+
+  function render(){
+    const q=qs[idx];
+    body.innerHTML=`
+      <div class="center text-secondary text-sm">${idx+1} / 5</div>
+      <div class="progress-wrap mt8"><div class="progress-bar" style="width:${idx/5*100}%"></div></div>
+      <div class="center text-2xl bold mt20" style="color:var(--text)">${q.q}</div>
+      <input type="number" id="math-inp" class="neu-input mt20" placeholder="답 입력" style="text-align:center;font-size:22px">
+      <button class="neu-btn accent block mt12" onclick="window._mathCheck()">확인</button>
+      <div class="msg-box mt8" id="math-msg"></div>`;
+    setTimeout(()=>{ const el=document.getElementById('math-inp'); if(el) el.focus(); },100);
+  }
+  render();
+  window._mathCheck = ()=>{
+    const inp=document.getElementById('math-inp');
+    const val=parseInt(inp.value);
+    const m=document.getElementById('math-msg');
+    if(isNaN(val)){m.textContent='숫자를 입력하세요';return;}
+    if(val===qs[idx].ans){ score++; playSuccess(); m.textContent='정답! ✓'; m.style.color='var(--green)'; }
+    else{ playFail(); m.textContent=`정답: ${qs[idx].ans}`; m.style.color='var(--red)'; }
+    setTimeout(()=>{ idx++; if(idx>=5){showResult(g,score+'/5점',score>=4?'계산 능력이 탁월해요!':'꾸준히 연습해봐요!','🧮');}else render(); },1000);
+  };
+}
+
+// ══════════════════════════════════════════════
+// GAME 4: HAND EXERCISE
+// ══════════════════════════════════════════════
+function renderHand(g, body) {
+  const exercises=[
+    {name:'주먹 쥐기',desc:'손을 꽉 쥐어보세요',icon:'✊',dur:4},
+    {name:'손가락 벌리기',desc:'손가락을 최대한 넓게 펼치세요',icon:'✋',dur:4},
+    {name:'엄지 돌리기',desc:'엄지손가락을 크게 원을 그리며 돌려요',icon:'👍',dur:5},
+    {name:'손목 돌리기',desc:'손목을 천천히 좌우로 돌려요',icon:'🔄',dur:5},
+    {name:'손가락 차례로',desc:'엄지→검지→중지→약지→새끼 순서로',icon:'🖐',dur:6},
+  ];
+  let idx=0, timer=null, remain=0;
+  function renderEx(){
+    const ex=exercises[idx];
+    remain=ex.dur;
+    body.innerHTML=`
+      <div class="center text-secondary text-sm">${idx+1} / ${exercises.length}</div>
+      <div class="progress-wrap mt8"><div class="progress-bar" style="width:${idx/exercises.length*100}%"></div></div>
+      <div class="hand-icon">${ex.icon}</div>
+      <div class="center bold text-lg">${ex.name}</div>
+      <div class="center text-secondary text-sm mt8">${ex.desc}</div>
+      <div class="center mt20" style="font-size:48px;font-weight:700;color:var(--accent)" id="ex-timer">${remain}초</div>
+      <div class="progress-wrap mt12"><div id="ex-bar" style="height:10px;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--green));width:100%;transition:width 1s linear"></div></div>`;
+    clearInterval(timer);
+    timer=setInterval(()=>{
+      remain--;
+      const tel=document.getElementById('ex-timer'); if(tel) tel.textContent=remain+'초';
+      const bar=document.getElementById('ex-bar'); if(bar) bar.style.width=(remain/ex.dur*100)+'%';
+      playTone(440,80,'sine',0.1);
+      if(remain<=0){ clearInterval(timer); idx++; if(idx>=exercises.length){showResult(g,'완료!','손 운동 완벽히 마쳤어요!','✋');}else setTimeout(renderEx,600);}
+    },1000);
+  }
+  window._audioCleanup = ()=>clearInterval(timer);
+  renderEx();
+}
+
+// ══════════════════════════════════════════════
+// GAME 5: WORD CHAIN
+// ══════════════════════════════════════════════
+function renderWord(g, body) {
+  const starters=['사과','나무','가방','학교','바람','노래','하늘','바다'];
+  const starter=starters[Math.floor(Math.random()*starters.length)];
+  let chain=[starter], score=0;
+  function render(){
+    const last=chain[chain.length-1];
+    const lastChar=last[last.length-1];
+    body.innerHTML=`
+      <div class="center text-secondary text-sm">앞 단어의 마지막 글자로 시작하는 단어를 5번 이어가세요</div>
+      <div class="word-chips mt16">
+        ${chain.map((w,i)=>`<div class="word-chip ${i===chain.length-1?'current':''}">${w}</div>`).join('')}
+      </div>
+      <div class="text-sm text-secondary mt12 bold">"<span style="color:var(--accent)">${lastChar}</span>"으로 시작하는 단어:</div>
+      <input type="text" id="word-inp" class="neu-input mt8" placeholder="단어 입력">
+      <button class="neu-btn accent block mt12" onclick="window._wordCheck()">입력</button>
+      <div class="msg-box mt8" id="word-msg"></div>`;
+    setTimeout(()=>{ const el=document.getElementById('word-inp'); if(el) el.focus(); },100);
+  }
+  render();
+  window._wordCheck = ()=>{
+    const inp=document.getElementById('word-inp'); const val=(inp.value||'').trim();
+    const m=document.getElementById('word-msg');
+    if(!val){m.textContent='단어를 입력하세요';return;}
+    const last=chain[chain.length-1]; const lastChar=last[last.length-1];
+    if(val[0]!==lastChar){playFail();m.textContent=`"${lastChar}"으로 시작해야 해요!`;m.style.color='var(--red)';return;}
+    if(chain.includes(val)){playFail();m.textContent='이미 사용한 단어예요!';m.style.color='var(--red)';return;}
+    chain.push(val); score++; playSuccess();
+    if(score>=5){showResult(g,score+'연결','언어 능력이 뛰어나요!','💬');}
+    else{inp.value='';render();}
+  };
+}
+
+// ══════════════════════════════════════════════
+// GAME 6: PATTERN
+// ══════════════════════════════════════════════
+function renderPattern(g, body) {
+  const patterns=[
+    {seq:[2,4,6,8,10],ans:12,hint:'2씩 더해요'},
+    {seq:[1,3,9,27],ans:81,hint:'3을 곱해요'},
+    {seq:[20,17,14,11],ans:8,hint:'3씩 빼요'},
+    {seq:[1,4,9,16],ans:25,hint:'제곱수예요'},
+    {seq:[2,3,5,8,13],ans:21,hint:'앞 두 수를 더해요'},
+    {seq:[100,50,25],ans:12,hint:'2로 나눠요'},
+  ];
+  let idx=0, score=0;
+  const pats=patterns.sort(()=>Math.random()-0.5).slice(0,4);
+  function render(){
+    const p=pats[idx];
+    body.innerHTML=`
+      <div class="center text-secondary text-sm">${idx+1} / ${pats.length}</div>
+      <div class="progress-wrap mt8"><div class="progress-bar" style="width:${idx/pats.length*100}%"></div></div>
+      <div class="pattern-tiles mt20">
+        ${p.seq.map(n=>`<div class="pattern-tile">${n}</div>`).join('<div style="color:var(--text2);font-size:20px">→</div>')}
+        <div style="color:var(--text2);font-size:20px">→</div>
+        <div class="pattern-tile ans">?</div>
+      </div>
+      <input type="number" id="pat-inp" class="neu-input" placeholder="다음 숫자" style="text-align:center;font-size:22px">
+      <button class="neu-btn accent block mt12" onclick="window._patCheck()">확인</button>
+      <div style="text-align:center;margin-top:12px">
+        <button onclick="document.getElementById('pat-hint').style.display='block';this.style.display='none'" class="neu-btn" style="font-size:12px">힌트 보기</button>
+        <div id="pat-hint" style="display:none;font-size:13px;color:var(--text2);margin-top:8px">힌트: ${p.hint}</div>
+      </div>
+      <div class="msg-box mt8" id="pat-msg"></div>`;
+    setTimeout(()=>{ const el=document.getElementById('pat-inp'); if(el) el.focus(); },100);
+  }
+  render();
+  window._patCheck = ()=>{
+    const inp=document.getElementById('pat-inp'); const val=parseInt(inp.value);
+    const m=document.getElementById('pat-msg'); const p=pats[idx];
+    if(isNaN(val)){m.textContent='숫자를 입력하세요';return;}
+    if(val===p.ans){score++;playSuccess();m.textContent='정답! ✓';m.style.color='var(--green)';}
+    else{playFail();m.textContent=`정답은 ${p.ans}이에요`;m.style.color='var(--red)';}
+    setTimeout(()=>{ idx++; if(idx>=pats.length){showResult(g,score+'/'+pats.length+'점',score>=3?'패턴 인식력이 훌륭해요!':'꾸준히 연습해요!','🔷');}else render(); },1000);
+  };
+}
+
+// ══════════════════════════════════════════════
+// GAME 7: REACTION
+// ══════════════════════════════════════════════
+function renderReaction(g, body) {
+  let round=0, total=5, times=[], waiting=false, started=false, t0=0, timer=null;
+  function render(){
+    body.innerHTML=`
+      <div class="center text-secondary text-sm">신호가 <b style="color:var(--green)">초록색</b>으로 바뀌면 즉시 탭! (${total}회)</div>
+      <div id="react-box" class="react-box wait mt20" onclick="window._reactTap()">
+        ${started?'준비 중...':'시작을 눌러주세요'}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">
+        ${times.map(t=>`<span style="background:var(--bg);box-shadow:var(--neu-btn);border-radius:20px;padding:6px 12px;font-size:12px">${t}ms</span>`).join('')}
+      </div>
+      ${!started?`<button class="neu-btn accent block" onclick="window._reactStart()">시작</button>`:''}`;
+  }
+  window._reactStart = ()=>{ started=true; round=0; times=[]; nextRound(); };
+  function nextRound(){
+    const box=document.getElementById('react-box'); if(!box)return;
+    box.className='react-box ready'; box.textContent='잠깐만요...'; waiting=false;
+    const delay=1500+Math.random()*2000;
+    timer=setTimeout(()=>{
+      const b=document.getElementById('react-box'); if(!b)return;
+      b.className='react-box go'; b.textContent='지금!'; t0=Date.now(); waiting=true;
+      playTone(880,100,'square');
+    },delay);
+  }
+  render();
+  window._reactTap = ()=>{
+    if(!started)return;
+    if(!waiting){ const b=document.getElementById('react-box'); if(b){b.className='react-box ready';b.textContent='너무 빨랐어요!';} clearTimeout(timer); playFail(); setTimeout(nextRound,1000); return; }
+    const ms=Date.now()-t0; times.push(ms); waiting=false; round++; playSuccess();
+    if(round>=total){const avg=Math.round(times.reduce((a,b)=>a+b,0)/times.length);showResult(g,'평균 '+avg+'ms',avg<400?'반응 속도가 빠르네요!':'꾸준히 연습해요!','⚡');}
+    else{render();nextRound();}
+  };
+  window._audioCleanup = ()=>clearTimeout(timer);
+}
+
+// ══════════════════════════════════════════════
+// GAME 8: PITCH MATCH (음정 맞추기)
+// ══════════════════════════════════════════════
+function renderPitch(g, body) {
+  const notes = [
+    {name:'도',freq:261,color:'#e74c3c'},
+    {name:'레',freq:294,color:'#e67e22'},
+    {name:'미',freq:330,color:'#f1c40f'},
+    {name:'파',freq:349,color:'#27ae60'},
+    {name:'솔',freq:392,color:'#3498db'},
+    {name:'라',freq:440,color:'#9b59b6'},
+    {name:'시',freq:494,color:'#1abc9c'},
+  ];
+  let round=0, total=6, score=0, target=null;
+
+  function render(){
+    const shuffled=[...notes].sort(()=>Math.random()-0.5).slice(0,5);
+    target=shuffled[Math.floor(Math.random()*shuffled.length)];
+    body.innerHTML=`
+      <div class="center text-secondary text-sm">${round+1} / ${total}</div>
+      <div class="progress-wrap mt8"><div class="progress-bar" style="width:${round/total*100}%"></div></div>
+      <div class="center mt20">
+        <button class="neu-btn accent" style="font-size:16px;padding:14px 28px" onclick="window._pitchPlay()">🔊 소리 듣기</button>
+      </div>
+      <div class="center text-secondary text-sm mt12">같은 음을 고르세요</div>
+      <div style="display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin-top:20px">
+        ${shuffled.map(n=>`<button class="pitch-note" style="background:${n.color};width:70px;height:70px;font-size:18px" onclick="window._pitchPick('${n.name}',${n.freq})">${n.name}</button>`).join('')}
+      </div>
+      <div class="msg-box mt16" id="pitch-msg"></div>`;
+    window._pitchPlay = ()=>{ playTone(target.freq, 600, 'sine'); };
+    window._pitchPlay();
+  }
+  render();
+  window._pitchPick = (name, freq)=>{
+    const m=document.getElementById('pitch-msg');
+    if(name===target.name){ score++; playSuccess(); m.textContent='정답! '+target.name+'('+target.freq+'Hz)'; m.style.color='var(--green)'; }
+    else{ playFail(); m.textContent='틀렸어요. 정답: '+target.name; m.style.color='var(--red)'; }
+    round++;
+    setTimeout(()=>{ if(round>=total){showResult(g,score+'/'+total+'점',score>=4?'음감이 뛰어나요!':'꾸준히 연습해요!','🎵');}else render(); },1200);
+  };
+}
+
+// ══════════════════════════════════════════════
+// GAME 9: RHYTHM TAP (리듬 박자)
+// ══════════════════════════════════════════════
+function renderRhythm(g, body) {
+  // Show a 4-beat pattern, user must tap in time
+  const patterns = [
+    [1,0,1,0,1,0,1,0], // 쿵쿵쿵쿵
+    [1,0,0,1,0,0,1,0], // 쿵..쿵..
+    [1,1,0,1,1,0,1,0], // 쿵쿵.쿵쿵.
+    [1,0,1,1,0,1,0,1], // 쿵.쿵쿵.쿵
+  ];
+  let phase='listen', pat=null, bpm=80, beatMs=60000/bpm, beatIdx=0, tapIdx=0, score=0, timer=null;
+  let totalRounds=3, curRound=0;
+
+  function startRound(){
+    pat=patterns[Math.floor(Math.random()*patterns.length)];
+    phase='listen'; beatIdx=0; tapIdx=0;
+    renderUI();
+    let i=0;
+    timer=setInterval(()=>{
+      if(i>=pat.length){ clearInterval(timer); setTimeout(startTap, 600); return; }
+      if(pat[i]) playTone(220,'square'===i?440:220, 'square', 0.2);
+      updateBeat(i); i++;
+    }, beatMs);
+  }
+
+  function startTap(){
+    phase='tap'; tapIdx=0; renderUI();
+    playTone(660,100,'sine');
+  }
+
+  function renderUI(){
+    body.innerHTML=`
+      <div class="center text-secondary text-sm">라운드 ${curRound+1} / ${totalRounds}</div>
+      <div class="progress-wrap mt8"><div class="progress-bar" style="width:${curRound/totalRounds*100}%"></div></div>
+      <div class="center bold mt16" style="font-size:16px;color:var(--text)">
+        ${phase==='listen'?'🎧 패턴을 들어보세요':'👇 같은 박자로 탭하세요!'}
+      </div>
+      <div style="display:flex;justify-content:center;gap:8px;margin:20px 0" id="beat-row">
+        ${pat.map((b,i)=>`<div id="beat-${i}" style="width:36px;height:36px;border-radius:8px;background:var(--bg);box-shadow:var(--neu-btn);transition:all 0.1s;display:flex;align-items:center;justify-content:center;font-size:16px">${b?'●':'○'}</div>`).join('')}
+      </div>
+      ${phase==='tap'?`<div id="tap-area" onclick="window._rhythmTap()" style="height:140px;border-radius:var(--radius);background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:white;cursor:pointer;user-select:none;box-shadow:4px 4px 12px rgba(74,144,217,0.4)">탭!</div>`:'<div style="height:140px;border-radius:var(--radius);background:var(--bg);box-shadow:var(--neu-inset);display:flex;align-items:center;justify-content:center;color:var(--text2)">듣는 중...</div>'}
+      <div class="msg-box mt12" id="rhythm-msg"></div>`;
+  }
+
+  function updateBeat(i){
+    const el=document.getElementById('beat-'+i);
+    if(!el)return;
+    if(pat[i]){ el.style.background='var(--accent)'; el.style.color='white'; setTimeout(()=>{if(el){el.style.background='var(--bg)';el.style.color='var(--text)';}},200); }
+  }
+
+  window._rhythmTap = ()=>{
+    if(phase!=='tap')return;
+    if(tapIdx>=pat.length)return;
+    const expected=pat[tapIdx];
+    playTone(440,100,'square',0.15);
+    const el=document.getElementById('beat-'+tapIdx);
+    if(el){ el.style.background=expected?'var(--green)':'var(--red)'; el.style.color='white'; }
+    if(expected) score++;
+    tapIdx++;
+    if(tapIdx>=pat.length){
+      const m=document.getElementById('rhythm-msg');
+      const correct=pat.filter(x=>x).length;
+      const hit=score-(curRound>0?curRound*correct:0);
+      m.textContent=`${Math.max(0,hit)} / ${correct} 박자 맞췄어요!`;
+      m.style.color='var(--accent)';
+      curRound++;
+      setTimeout(()=>{ if(curRound>=totalRounds){showResult(g,score+'박자',score>5?'리듬감이 좋아요!':'계속 연습해요!','🥁');}else startRound(); },1200);
+    }
+  };
+  window._audioCleanup = ()=>clearInterval(timer);
+  startRound();
+}
+
+// ══════════════════════════════════════════════
+// GAME 10: SOUND MATCH (소리 기억 짝 맞추기)
+// ══════════════════════════════════════════════
+function renderSoundMatch(g, body) {
+  const soundPairs = [
+    {icon:'🐶',freq:330,name:'강아지'},
+    {icon:'🐱',freq:500,name:'고양이'},
+    {icon:'🐸',freq:200,name:'개구리'},
+    {icon:'🔔',freq:660,name:'종소리'},
+    {icon:'🎸',freq:440,name:'기타'},
+    {icon:'🎺',freq:587,name:'트럼펫'},
+  ];
+  // Create pairs: icon shown, some hidden
+  let items = [...soundPairs, ...soundPairs].map((s,i)=>({...s,id:i,revealed:false,matched:false}));
+  items = items.sort(()=>Math.random()-0.5);
+
+  let flipped=[], score=0, locked=false;
+
+  function render(){
+    body.innerHTML=`
+      <div class="center text-secondary text-sm">같은 소리 카드 짝 맞추기! 소리를 듣고 짝을 찾으세요</div>
+      <div class="sound-cards mt16" id="sound-grid">
+        ${items.map((item,i)=>`<button class="sound-card ${item.matched?'matched':item.revealed?'flipped':''}" id="sc-${i}" onclick="window._soundFlip(${i})">
+          ${item.matched||item.revealed?item.icon:'?'}
+        </button>`).join('')}
+      </div>
+      <div class="center text-secondary text-sm mt12">맞춘 짝: ${score} / ${soundPairs.length}</div>
+      <div class="msg-box mt8" id="sound-msg"></div>`;
+  }
+  render();
+
+  window._soundFlip = (idx)=>{
+    if(locked || items[idx].matched || items[idx].revealed) return;
+    items[idx].revealed=true;
+    playTone(items[idx].freq, 400, 'sine');
+    flipped.push(idx);
+    render();
+    if(flipped.length===2){
+      locked=true;
+      const [a,b]=flipped;
+      setTimeout(()=>{
+        if(items[a].name===items[b].name){
+          items[a].matched=true; items[b].matched=true;
+          score++; playSuccess();
+          const m=document.getElementById('sound-msg');
+          if(m){ m.textContent='짝 맞췄어요! 🎉'; m.style.color='var(--green)'; }
+          flipped=[];
+          if(score===soundPairs.length){ setTimeout(()=>showResult(g,'완료!','소리 기억력이 뛰어나요!','🔊'),600); }
+        } else {
+          items[a].revealed=false; items[b].revealed=false;
+          playFail(); flipped=[];
+        }
+        locked=false; render();
+      },900);
+    }
+  };
+}
+
+// ══════════════════════════════════════════════
+// START
+// ══════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
