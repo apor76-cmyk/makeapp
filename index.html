@@ -397,27 +397,41 @@ function setSyncUI(state, msg) {
 async function ghGet() {
   const tok = getToken();
   if (!tok) return null;
-  const res = await fetch(
+
+  // SHA 확인용으로 contents API 먼저 호출
+  const metaRes = await fetch(
     `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}?ref=${GH_BRANCH}&_=${Date.now()}`,
     { headers: { Authorization: `token ${tok}`, Accept: 'application/vnd.github.v3+json' } }
   );
-  if (res.status === 401 || res.status === 403) throw new Error('토큰 인증 실패');
-  if (res.status === 404) return 'not_found';
-  if (!res.ok) throw new Error(`GitHub ${res.status}`);
-  const data = await res.json();
-  ghSha = data.sha;
-  // UTF-8 안전 디코딩 (한글 깨짐 방지)
-  const binary = atob(data.content.replace(/\n/g, ''));
-  const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
-  return JSON.parse(new TextDecoder('utf-8').decode(bytes));
+  if (metaRes.status === 401 || metaRes.status === 403) throw new Error('토큰 인증 실패');
+  if (metaRes.status === 404) return 'not_found';
+  if (!metaRes.ok) throw new Error(`GitHub ${metaRes.status}`);
+  const meta = await metaRes.json();
+  ghSha = meta.sha;
+
+  // 실제 내용은 raw 엔드포인트로 받기 (인코딩 문제 없음)
+  const rawRes = await fetch(
+    `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${GH_FILE}?_=${Date.now()}`,
+    { headers: { Authorization: `token ${tok}` } }
+  );
+  if (!rawRes.ok) throw new Error(`raw fetch ${rawRes.status}`);
+  return await rawRes.json();
 }
 
 async function ghPut(payload) {
   const tok = getToken();
   if (!tok) throw new Error('토큰 없음');
+
+  // UTF-8 안전 인코딩
+  const jsonStr = JSON.stringify(payload, null, 2);
+  const utf8Bytes = new TextEncoder().encode(jsonStr);
+  let binary = '';
+  utf8Bytes.forEach(b => binary += String.fromCharCode(b));
+  const encoded = btoa(binary);
+
   const body = {
     message: `update ${GH_FILE}`,
-    content: btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(payload, null, 2)))),
+    content: encoded,
     branch: GH_BRANCH,
   };
   if (ghSha) body.sha = ghSha;
