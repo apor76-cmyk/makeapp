@@ -406,7 +406,10 @@ async function ghGet() {
   if (!res.ok) throw new Error(`GitHub ${res.status}`);
   const data = await res.json();
   ghSha = data.sha;
-  return JSON.parse(atob(data.content.replace(/\n/g, '')));
+  // UTF-8 안전 디코딩 (한글 깨짐 방지)
+  const binary = atob(data.content.replace(/\n/g, ''));
+  const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+  return JSON.parse(new TextDecoder('utf-8').decode(bytes));
 }
 
 async function ghPut(payload) {
@@ -414,7 +417,7 @@ async function ghPut(payload) {
   if (!tok) throw new Error('토큰 없음');
   const body = {
     message: `update ${GH_FILE}`,
-    content: btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2)))),
+    content: btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(payload, null, 2)))),
     branch: GH_BRANCH,
   };
   if (ghSha) body.sha = ghSha;
