@@ -370,6 +370,9 @@ function openTokenModal() {
 async function saveToken() {
   const tok = document.getElementById('iToken').value.trim();
   if (!tok) { shake('iToken'); return; }
+  if (!tok.startsWith('ghp_') && !tok.startsWith('github_pat_')) {
+    if (!confirm('일반적인 GitHub 토큰은 ghp_ 또는 github_pat_ 으로 시작합니다.\n이 토큰이 맞는지 확인해 주세요.\n\n계속 진행할까요?')) return;
+  }
   localStorage.setItem(TOKEN_KEY, tok);
   ghSha = null;
   closeModal('tokenModal');
@@ -398,24 +401,38 @@ async function ghGet() {
   const tok = getToken();
   if (!tok) return null;
 
-  // SHA 확인용으로 contents API 먼저 호출
-  const metaRes = await fetch(
-    `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}?ref=${GH_BRANCH}&_=${Date.now()}`,
-    { headers: { Authorization: `token ${tok}`, Accept: 'application/vnd.github.v3+json' } }
-  );
-  if (metaRes.status === 401 || metaRes.status === 403) throw new Error('토큰 인증 실패');
-  if (metaRes.status === 404) return 'not_found';
-  if (!metaRes.ok) throw new Error(`GitHub ${metaRes.status}`);
-  const meta = await metaRes.json();
+  let res;
+  try {
+    res = await fetch(
+      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}?ref=${GH_BRANCH}`,
+      {
+        headers: {
+          Authorization: `token ${tok}`,
+          Accept: 'application/vnd.github.v3+json',
+          'If-None-Match': ''
+        },
+        cache: 'no-store'
+      }
+    );
+  } catch (netErr) {
+    throw new Error('네트워크 오류 — 인터넷 연결을 확인하세요');
+  }
+  if (res.status === 401 || res.status === 403) throw new Error('토큰 인증 실패 — 토큰을 확인하세요');
+  if (res.status === 404) return 'not_found';
+  if (!res.ok) throw new Error(`GitHub 오류 (${res.status})`);
+
+  const meta = await res.json();
   ghSha = meta.sha;
 
-  // 실제 내용은 raw 엔드포인트로 받기 (인코딩 문제 없음)
-  const rawRes = await fetch(
-    `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${GH_FILE}?_=${Date.now()}`,
-    { headers: { Authorization: `token ${tok}` } }
-  );
-  if (!rawRes.ok) throw new Error(`raw fetch ${rawRes.status}`);
-  return await rawRes.json();
+  // contents API의 content 필드에서 직접 디코딩 (raw 엔드포인트 불필요)
+  try {
+    const decoded = new TextDecoder().decode(
+      Uint8Array.from(atob(meta.content.replace(/\n/g, '')), c => c.charCodeAt(0))
+    );
+    return JSON.parse(decoded);
+  } catch (decodeErr) {
+    throw new Error('파일 내용 파싱 실패');
+  }
 }
 
 async function ghPut(payload) {
@@ -435,18 +452,24 @@ async function ghPut(payload) {
     branch: GH_BRANCH,
   };
   if (ghSha) body.sha = ghSha;
-  const res = await fetch(
-    `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`,
-    {
-      method: 'PUT',
-      headers: {
-        Authorization: `token ${tok}`,
-        Accept: 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
-    }
-  );
+
+  let res;
+  try {
+    res = await fetch(
+      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: `token ${tok}`,
+          Accept: 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      }
+    );
+  } catch (netErr) {
+    throw new Error('네트워크 오류 — 인터넷 연결을 확인하세요');
+  }
   if (res.status === 409) {
     // SHA 충돌 → 최신 내용 다시 로드
     const latest = await ghGet();
@@ -454,9 +477,10 @@ async function ghPut(payload) {
     throw new Error('동기화 충돌 — 다시 저장해 주세요');
   }
   if (res.status === 401 || res.status === 403) throw new Error('토큰 인증 실패');
+  if (res.status === 422) throw new Error('저장소 또는 파일 경로를 확인하세요');
   if (!res.ok) {
     const e = await res.json().catch(() => ({}));
-    throw new Error(e.message || `GitHub ${res.status}`);
+    throw new Error(e.message || `GitHub 오류 (${res.status})`);
   }
   const result = await res.json();
   if (result.content?.sha) ghSha = result.content.sha;
