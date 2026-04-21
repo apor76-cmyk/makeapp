@@ -561,14 +561,15 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>
 function openFile(i) {
   activeIdx=i; renderList();
   const f=files[i];
+  const encodedSrc = encodeURIComponent(f.filename).replace(/%2F/g, '/');
   document.getElementById('mainArea').innerHTML=`
     <div class="vbar">
       <span style="font-size:20px">${f.icon||'📄'}</span>
       <span class="vbar-title">${x(f.label)}</span>
-      <a class="vbtn" href="${x(f.filename)}" target="_blank">↗ 새 탭으로 열기</a>
+      <a class="vbtn" href="${encodedSrc}" target="_blank">↗ 새 탭으로 열기</a>
       <button class="vbtn" onclick="openEdit(${i})">✏️ 편집</button>
     </div>
-    <iframe src="${x(f.filename)}" title="${x(f.label)}" id="contentFrame" style="flex:1;border:none;width:100%;min-height:0"></iframe>`;
+    <iframe src="${encodedSrc}" title="${x(f.label)}" id="contentFrame" style="flex:1;border:none;width:100%;min-height:0"></iframe>`;
   document.getElementById('contentFrame').addEventListener('load',()=>injectThemeToIframe(document.getElementById('contentFrame')));
 }
 
