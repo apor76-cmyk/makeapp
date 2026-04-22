@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko" data-theme="dark">
 <head>
@@ -152,7 +153,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   <div class="screen active" id="setupScreen">
     <div class="setup">
       <div style="text-align:center">
-        <div class="logo">채팅</div>
+        <div class="logo"></div>
         <div class="logo-sub">P2P 실시간 대화 · 서버 없음</div>
       </div>
 
@@ -340,6 +341,7 @@ function connectToPeer() {
     const c = peer.connect(hostPeerId(code), { reliable: true });
     c.on('open', () => {
       setupConn(c);
+      c.send({ type: 'name', name: myName }); // 게스트가 직접 이름 전송
       addSys('연결됐습니다! 🎉');
       showChat();
     });
@@ -364,6 +366,9 @@ function connectToPeer() {
 // ── CONNECTION SETUP ──
 function setupConn(c) {
   conn = c;
+  // 호스트 입장에서는 connection 이벤트 후 open이 fire됨 → 이름 전송
+  // 게스트 입장에서는 이미 open된 상태로 setupConn이 호출되므로 open이 다시 fire되지 않음
+  // → 게스트 이름 전송은 connectToPeer()의 c.on('open') 안에서 직접 처리
   conn.on('open', () => conn.send({ type:'name', name:myName }));
   conn.on('data', d => {
     if (d.type==='name') {
