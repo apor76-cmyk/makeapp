@@ -1,869 +1,429 @@
-
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>내면 성장 종합 시스템</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--font-sans,'Anthropic Sans',sans-serif)}
-:root{--c-purple-50:#EEEDFE;--c-purple-100:#CECBF6;--c-purple-200:#AFA9EC;--c-purple-400:#7F77DD;--c-purple-600:#534AB7;--c-purple-800:#3C3489;--c-teal-50:#E1F5EE;--c-teal-100:#9FE1CB;--c-teal-400:#1D9E75;--c-teal-600:#0F6E56;--c-teal-800:#085041;--c-amber-50:#FAEEDA;--c-amber-100:#FAC775;--c-amber-400:#BA7517;--c-amber-600:#854F0B;--c-coral-50:#FAECE7;--c-coral-100:#F5C4B3;--c-coral-400:#D85A30;--c-coral-600:#993C1D;--c-blue-50:#E6F1FB;--c-blue-100:#B5D4F4;--c-blue-400:#378ADD;--c-blue-600:#185FA5;--c-pink-50:#FBEAF0;--c-pink-100:#F4C0D1;--c-pink-400:#D4537E;--c-pink-600:#993556}
-.page{display:flex;flex-direction:column;gap:0;padding:0 0 40px}
-.tab-bar{display:flex;gap:6px;padding:16px 16px 0;border-bottom:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary);position:sticky;top:0;z-index:10}
-.tab{font-size:13px;padding:8px 14px;border-radius:8px 8px 0 0;border:0.5px solid transparent;color:var(--color-text-secondary);cursor:pointer;transition:all .15s;white-space:nowrap;background:transparent}
-.tab:hover{color:var(--color-text-primary);background:var(--color-background-secondary)}
-.tab.active{background:var(--color-background-primary);border-color:var(--color-border-tertiary);border-bottom-color:var(--color-background-primary);color:var(--color-text-primary);font-weight:500}
-.section{display:none;padding:20px 16px}
-.section.active{display:block}
-
-/* ── MINDMAP ── */
-.mindmap-wrap{overflow-x:auto;padding-bottom:8px}
-.mindmap-svg{display:block;min-width:900px}
-
-/* clickable node hover */
-.node-clickable{cursor:pointer;transition:opacity .15s}
-.node-clickable:hover{opacity:.82}
-
-/* ── POPUP OVERLAY ── */
+:root{
+  --bg-page:radial-gradient(circle at center,#eef3f9,#dde6f2);
+  --bg-detail:#fff;--border-detail:rgba(0,0,0,0.08);--shadow-detail:rgba(0,0,0,0.08);
+  --text-title:#1a1a1a;--text-sub:#6b7280;
+  --node-fill-purple:#EEEDFE;--node-stroke-purple:#7F77DD;--node-title-purple:#3C3489;
+  --node-fill-teal:#E1F5EE;--node-stroke-teal:#1D9E75;--node-title-teal:#085041;
+  --node-fill-amber:#FAEEDA;--node-stroke-amber:#EF9F27;--node-title-amber:#633806;
+  --node-fill-coral:#FAECE7;--node-stroke-coral:#F0997B;--node-title-coral:#993C1D;
+  --node-fill-blue:#E6F1FB;--node-stroke-blue:#85B7EB;--node-title-blue:#0C447C;
+  --node-fill-pink:#FBEAF0;--node-stroke-pink:#D4537E;--node-title-pink:#993556;
+  --link-opacity:0.45;--center-sub:#CECBF6;
+  --toggle-bg:#e2e8f0;--toggle-thumb:#fff;
+  --edit-bar:#f8fafc;--edit-bar-border:rgba(0,0,0,0.1);
+  --edit-btn:#fff;--edit-btn-border:rgba(0,0,0,0.15);--edit-btn-hover:#f0f4ff;
+  --edit-active:#5A64C7;--drag-hint:#5A64C7;
+}
+[data-theme=dark]{
+  --bg-page:radial-gradient(circle at center,#1a2133,#111827);
+  --bg-detail:#1e2635;--border-detail:rgba(255,255,255,0.07);--shadow-detail:rgba(0,0,0,0.35);
+  --text-title:#f1f5f9;--text-sub:#94a3b8;
+  --node-fill-purple:#252B74;--node-stroke-purple:#534AB7;--node-title-purple:#CECBF6;
+  --node-fill-teal:#04342C;--node-stroke-teal:#0F6E56;--node-title-teal:#9FE1CB;
+  --node-fill-amber:#412402;--node-stroke-amber:#854F0B;--node-title-amber:#FAC775;
+  --node-fill-coral:#4A1B0C;--node-stroke-coral:#993C1D;--node-title-coral:#F5C4B3;
+  --node-fill-blue:#042C53;--node-stroke-blue:#185FA5;--node-title-blue:#B5D4F4;
+  --node-fill-pink:#3E1E50;--node-stroke-pink:#993556;--node-title-pink:#F4C0D1;
+  --link-opacity:0.3;--center-sub:#7F77DD;
+  --toggle-bg:#3b4a6b;--toggle-thumb:#1e2635;
+  --edit-bar:#1e2635;--edit-bar-border:rgba(255,255,255,0.1);
+  --edit-btn:#2a3550;--edit-btn-border:rgba(255,255,255,0.15);--edit-btn-hover:#354060;
+  --edit-active:#7F77DD;--drag-hint:#9f97f0;
+}
+body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;background:var(--bg-page);color:var(--text-title);transition:background .3s,color .3s;min-height:100vh;}
+#wrap{display:flex;flex-direction:column;align-items:center;padding:16px 0 40px}
+#topbar{width:min(1000px,96vw);display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.map-title{font-size:15px;font-weight:600;color:var(--text-title)}
+.map-hint{font-size:11px;color:var(--text-sub);opacity:.75;margin-top:2px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.toggle-btn{display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;font-size:12px;font-weight:500;color:var(--text-sub);padding:6px 0;transition:color .2s;}
+.toggle-btn:hover{color:var(--text-title)}
+.toggle-track{width:40px;height:22px;border-radius:11px;background:var(--toggle-bg);position:relative;transition:background .3s;flex-shrink:0;}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--toggle-thumb);transition:transform .3s;display:flex;align-items:center;justify-content:center;font-size:10px;line-height:1;}
+[data-theme=dark] .toggle-thumb{transform:translateX(18px)}
+#edit-mode-btn{font-size:12px;font-weight:500;padding:6px 14px;border-radius:8px;border:.5px solid var(--edit-btn-border);background:var(--edit-btn);color:var(--text-title);cursor:pointer;transition:all .15s;white-space:nowrap;}
+#edit-mode-btn:hover{background:var(--edit-btn-hover)}
+#edit-mode-btn.active{background:var(--edit-active);color:#fff;border-color:transparent;}
+#edit-toolbar{width:min(1000px,96vw);display:none;background:var(--edit-bar);border:.5px solid var(--edit-bar-border);border-radius:12px;padding:10px 14px;margin-bottom:10px;align-items:center;gap:8px;flex-wrap:wrap;}
+#edit-toolbar.visible{display:flex}
+.edit-hint{font-size:11px;color:var(--drag-hint);flex:1;min-width:200px;}
+.edit-hint b{font-weight:600}
+.toolbar-btns{display:flex;gap:6px;flex-wrap:wrap;}
+.tb-btn{font-size:11px;font-weight:500;padding:5px 11px;border-radius:7px;border:.5px solid var(--edit-btn-border);background:var(--edit-btn);color:var(--text-title);cursor:pointer;transition:background .15s;white-space:nowrap;}
+.tb-btn:hover{background:var(--edit-btn-hover)}
+.svg-scroll{width:min(1000px,100vw);overflow-x:auto;padding-bottom:4px}
+svg#mm{display:block;width:1000px;height:900px;}
+.link{fill:none;stroke-width:1.6;}
+.child-link{fill:none;stroke-width:1;}
+.node-g{cursor:pointer;}
+.node-g:hover rect,.node-g:hover ellipse{opacity:.82}
+.node-title{font-size:12px;font-weight:600;text-anchor:middle;dominant-baseline:central;pointer-events:none;}
+.node-sub{font-size:10px;text-anchor:middle;dominant-baseline:central;pointer-events:none;}
+.child-title{font-size:11px;font-weight:500;text-anchor:middle;dominant-baseline:central;pointer-events:none;}
+.edit-mode .node-g{cursor:grab;}
+.edit-mode .node-g:active{cursor:grabbing;}
+.edit-mode .node-g rect,.edit-mode .node-g ellipse{stroke-dasharray:4 2;}
+.drag-active rect,.drag-active ellipse{stroke-dasharray:none!important;filter:drop-shadow(0 4px 12px rgba(127,119,221,.45));}
 .popup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center;padding:20px}
 .popup-overlay.open{display:flex}
-.popup-box{background:var(--color-background-primary,#fff);border-radius:16px;max-width:560px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
-.popup-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:0.5px solid var(--color-border-tertiary,#eee)}
-.popup-title{font-size:15px;font-weight:600;color:var(--color-text-primary,#111);line-height:1.3}
-.popup-source{font-size:11px;color:var(--color-text-secondary,#888);margin-top:2px}
-.popup-close{width:28px;height:28px;border-radius:8px;border:none;background:var(--color-background-secondary,#f5f5f5);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--color-text-secondary,#666);flex-shrink:0;transition:background .12s}
-.popup-close:hover{background:var(--color-background-tertiary,#eee)}
+.popup-box{background:var(--bg-detail);border-radius:16px;max-width:560px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px var(--shadow-detail);overflow:hidden;border:.5px solid var(--border-detail)}
+.popup-header{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 20px 14px;border-bottom:.5px solid var(--border-detail);gap:12px}
+.popup-title{font-size:15px;font-weight:600;color:var(--text-title);line-height:1.3}
+.popup-source{font-size:11px;color:var(--text-sub);margin-top:2px}
+.popup-close{width:28px;height:28px;border-radius:8px;border:none;background:var(--border-detail);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text-sub);flex-shrink:0;}
+.popup-close:hover{opacity:.7}
 .popup-body{padding:18px 20px;overflow-y:auto;flex:1}
-.popup-summary{font-size:13px;line-height:1.8;color:var(--color-text-primary,#333)}
-.popup-summary .highlight{font-weight:600;color:inherit}
-.popup-items{margin-top:12px;display:flex;flex-direction:column;gap:8px}
-.popup-item{background:var(--color-background-secondary,#f8f8f8);border-radius:10px;padding:10px 14px;font-size:12px;line-height:1.6;color:var(--color-text-primary,#333);border-left:3px solid transparent}
-.popup-quote{font-size:13px;font-style:italic;color:var(--color-text-secondary,#666);border-left:3px solid;padding-left:12px;margin-top:12px;line-height:1.7}
-
-/* ── CLUSTER CARDS ── */
-.cluster-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px}
-.cluster-card{border-radius:12px;padding:14px 16px;border:0.5px solid transparent}
-.cluster-card h3{font-size:13px;font-weight:500;margin-bottom:8px}
-.cluster-card ul{list-style:none;padding:0}
-.cluster-card ul li{font-size:12px;padding:3px 0;color:inherit;opacity:.85;display:flex;align-items:flex-start;gap:6px}
-.cluster-card ul li::before{content:"·";font-size:16px;line-height:1;flex-shrink:0}
-
-/* ── CHECKLIST ── */
-.checklist-section{margin-bottom:24px}
-.checklist-section h3{font-size:13px;font-weight:500;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary)}
-.check-item{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background .12s;user-select:none}
-.check-item:hover{background:var(--color-background-secondary)}
-.check-box{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--color-border-secondary);flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all .15s}
-.check-box.done{background:var(--c-teal-400);border-color:var(--c-teal-400)}
-.check-box.done::after{content:"✓";color:#fff;font-size:11px;font-weight:600}
-.check-label{font-size:13px;line-height:1.5;color:var(--color-text-primary)}
-.check-label.done{text-decoration:line-through;color:var(--color-text-secondary)}
-.check-sub{font-size:11px;color:var(--color-text-secondary);margin-top:2px}
-.progress-bar-wrap{height:4px;background:var(--color-background-secondary);border-radius:2px;margin:0 0 16px;overflow:hidden}
-.progress-bar{height:100%;background:var(--c-teal-400);border-radius:2px;transition:width .3s}
-.progress-label{font-size:12px;color:var(--color-text-secondary);margin-bottom:8px}
-
-/* ── ROUTINE ── */
-.routine-timeline{display:flex;flex-direction:column;gap:0}
-.time-block{display:flex;gap:12px;position:relative}
-.time-block::before{content:"";position:absolute;left:70px;top:28px;bottom:-8px;width:1px;background:var(--color-border-tertiary)}
-.time-block:last-child::before{display:none}
-.time-label{font-size:11px;color:var(--color-text-secondary);width:60px;flex-shrink:0;padding-top:8px;text-align:right;line-height:1.4}
-.time-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;margin-top:10px;border:2px solid var(--color-background-primary)}
-.time-content{flex:1;padding:8px 12px;border-radius:10px;margin-bottom:8px;border:0.5px solid transparent}
-.time-content h4{font-size:13px;font-weight:500;margin-bottom:3px}
-.time-content p{font-size:12px;opacity:.85;line-height:1.5}
-.time-content .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-.tag{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500}
-.section-label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--color-text-secondary);margin:20px 0 10px}
-
-/* hint text */
-.map-hint{font-size:11px;color:var(--color-text-secondary);text-align:center;margin-bottom:8px;opacity:.7}
+.popup-items{display:flex;flex-direction:column;gap:8px}
+.popup-item{background:var(--bg-page);border-radius:10px;padding:10px 14px;font-size:12px;line-height:1.7;color:var(--text-title);border-left:3px solid transparent}
+.popup-quote{font-size:13px;font-style:italic;color:var(--text-sub);border-left:3px solid;padding-left:12px;margin-top:12px;line-height:1.7}
 </style>
-
-<!-- POPUP OVERLAY -->
+</head>
+<body>
 <div class="popup-overlay" id="popup" onclick="closePopupOutside(event)">
   <div class="popup-box">
     <div class="popup-header">
-      <div>
-        <div class="popup-title" id="popup-title"></div>
-        <div class="popup-source" id="popup-source"></div>
-      </div>
+      <div><div class="popup-title" id="popup-title"></div><div class="popup-source" id="popup-source"></div></div>
       <button class="popup-close" onclick="closePopup()">✕</button>
     </div>
     <div class="popup-body" id="popup-body"></div>
   </div>
 </div>
-
-<div class="page">
-  <div class="tab-bar">
-    <div class="tab active" onclick="switchTab('map')">마인드맵</div>
-    <div class="tab" onclick="switchTab('clusters')">주제 분류</div>
-    <div class="tab" onclick="switchTab('checklist')">단계별 체크리스트</div>
-    <div class="tab" onclick="switchTab('routine')">하루 수행 루틴</div>
+<div id="wrap">
+<div id="topbar">
+  <div>
+    <div class="map-title">내면 성장 종합 시스템</div>
+    <div class="map-hint" id="main-hint">💡 노드를 클릭하면 상세 내용을 볼 수 있습니다</div>
   </div>
-
-  <!-- TAB 1: MINDMAP -->
-  <div class="section active" id="tab-map">
-    <div class="map-hint">💡 노드를 클릭하면 상세 내용을 볼 수 있습니다</div>
-    <div class="mindmap-wrap">
-      <svg class="mindmap-svg" viewBox="0 0 1100 920" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-            <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </marker>
-        </defs>
-
-        <!-- CENTER NODE -->
-        <g class="node-clickable" onclick="showPopup('center')">
-          <rect x="395" y="420" width="210" height="60" rx="14" fill="var(--c-purple-400)" stroke="none"/>
-          <text font-family="var(--font-sans)" font-size="14" font-weight="500" fill="white" text-anchor="middle" dominant-baseline="central" x="500" y="450">내면 성장 종합 시스템</text>
-        </g>
-
-        <!-- ── CLUSTER A: 마음 관찰 (TOP LEFT) ── -->
-        <path d="M440 420 Q330 330 230 270" fill="none" stroke="var(--c-purple-200)" stroke-width="1.5" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('watching')">
-          <rect x="110" y="228" width="166" height="46" rx="10" fill="var(--c-purple-50)" stroke="var(--c-purple-200)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="13" font-weight="500" fill="var(--c-purple-800)" text-anchor="middle" dominant-baseline="central" x="193" y="251">마음 관찰 (왓칭)</text>
-        </g>
-        <!-- A children: spread vertically below, col x=10,150,290 -->
-        <line x1="150" y1="274" x2="75" y2="320" stroke="var(--c-purple-100)" stroke-width="1" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('watching-observe')">
-          <rect x="10" y="320" width="136" height="36" rx="8" fill="var(--c-purple-50)" stroke="var(--c-purple-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="11" fill="var(--c-purple-600)" text-anchor="middle" dominant-baseline="central" x="78" y="338">생각을 바라보기</text>
-        </g>
-
-        <line x1="193" y1="274" x2="193" y2="320" stroke="var(--c-purple-100)" stroke-width="1" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('watching-observer')">
-          <rect x="122" y="320" width="142" height="36" rx="8" fill="var(--c-purple-50)" stroke="var(--c-purple-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="11" fill="var(--c-purple-600)" text-anchor="middle" dominant-baseline="central" x="193" y="338">관찰자로 살아가기</text>
-        </g>
-
-        <line x1="236" y1="274" x2="310" y2="320" stroke="var(--c-purple-100)" stroke-width="1" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('watching-empty')">
-          <rect x="244" y="320" width="136" height="36" rx="8" fill="var(--c-purple-50)" stroke="var(--c-purple-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="11" fill="var(--c-purple-600)" text-anchor="middle" dominant-baseline="central" x="312" y="338">텅 빈 의식 상태</text>
-        </g>
-
-        <!-- ── CLUSTER B: 감정·끌어당김 (TOP CENTER) ── -->
-        <path d="M470 420 Q450 320 440 258" fill="none" stroke="var(--c-teal-100)" stroke-width="1.5" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('attraction')">
-          <rect x="350" y="212" width="178" height="46" rx="10" fill="var(--c-teal-50)" stroke="var(--c-teal-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="13" font-weight="500" fill="var(--c-teal-800)" text-anchor="middle" dominant-baseline="central" x="439" y="235">감정 · 끌어당김</text>
-        </g>
-
-        <line x1="390" y1="258" x2="330" y2="310" stroke="var(--c-teal-100)" stroke-width="1" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('attraction-feeling')">
-          <rect x="260" y="310" width="136" height="36" rx="8" fill="var(--c-teal-50)" stroke="var(--c-teal-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="11" fill="var(--c-teal-600)" text-anchor="middle" dominant-baseline="central" x="328" y="328">이미 이룬 감정</text>
-        </g>
-
-        <line x1="439" y1="258" x2="439" y2="310" stroke="var(--c-teal-100)" stroke-width="1" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('attraction-gratitude')">
-          <rect x="369" y="310" width="140" height="36" rx="8" fill="var(--c-teal-50)" stroke="var(--c-teal-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="11" fill="var(--c-teal-600)" text-anchor="middle" dominant-baseline="central" x="439" y="328">감사·충만 상태</text>
-        </g>
-
-        <line x1="488" y1="258" x2="548" y2="310" stroke="var(--c-teal-100)" stroke-width="1" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('intuition')">
-          <rect x="480" y="310" width="136" height="36" rx="8" fill="var(--c-teal-50)" stroke="var(--c-teal-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="11" fill="var(--c-teal-600)" text-anchor="middle" dominant-baseline="central" x="548" y="328">직감 따르기</text>
-        </g>
-
-        <!-- ── CLUSTER C: 명상·수행 (TOP RIGHT) ── -->
-        <path d="M560 420 Q660 330 760 270" fill="none" stroke="var(--c-amber-100)" stroke-width="1.5" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('meditation')">
-          <rect x="718" y="228" width="156" height="46" rx="10" fill="var(--c-amber-50)" stroke="var(--c-amber-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="13" font-weight="500" fill="var(--c-amber-600)" text-anchor="middle" dominant-baseline="central" x="796" y="251">명상 · 수행</text>
-        </g>
-
-        <line x1="748" y1="274" x2="686" y2="320" stroke="var(--c-amber-100)" stroke-width="1" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('meditation-focus')">
-          <rect x="618" y="320" width="136" height="36" rx="8" fill="var(--c-amber-50)" stroke="var(--c-amber-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="11" fill="var(--c-amber-600)" text-anchor="middle" dominant-baseline="central" x="686" y="338">집중 명상</text>
-        </g>
-
-        <line x1="796" y1="274" x2="796" y2="320" stroke="var(--c-amber-100)" stroke-width="1" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('meditation-analysis')">
-          <rect x="728" y="320" width="136" height="36" rx="8" fill="var(--c-amber-50)" stroke="var(--c-amber-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="11" fill="var(--c-amber-600)" text-anchor="middle" dominant-baseline="central" x="796" y="338">분석 명상</text>
-        </g>
-
-        <line x1="844" y1="274" x2="906" y2="320" stroke="var(--c-amber-100)" stroke-width="1" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('meditation-daily')">
-          <rect x="838" y="320" width="136" height="36" rx="8" fill="var(--c-amber-50)" stroke="var(--c-amber-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="11" fill="var(--c-amber-600)" text-anchor="middle" dominant-baseline="central" x="906" y="338">일상 수행</text>
-        </g>
-
-        <!-- ── CLUSTER D: 집착 내려놓기 (BOTTOM LEFT) ── -->
-        <path d="M440 480 Q330 570 240 620" fill="none" stroke="var(--c-coral-100)" stroke-width="1.5" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('detach')">
-          <rect x="108" y="620" width="178" height="46" rx="10" fill="var(--c-coral-50)" stroke="var(--c-coral-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="13" font-weight="500" fill="var(--c-coral-600)" text-anchor="middle" dominant-baseline="central" x="197" y="643">집착 내려놓기</text>
-        </g>
-
-        <line x1="145" y1="666" x2="80" y2="716" stroke="var(--c-coral-100)" stroke-width="1" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('detach-pain')">
-          <rect x="10" y="716" width="136" height="36" rx="8" fill="var(--c-coral-50)" stroke="var(--c-coral-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="11" fill="var(--c-coral-600)" text-anchor="middle" dominant-baseline="central" x="78" y="734">고통은 신호</text>
-        </g>
-
-        <line x1="197" y1="666" x2="197" y2="716" stroke="var(--c-coral-100)" stroke-width="1" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('detach-karma')">
-          <rect x="126" y="716" width="142" height="36" rx="8" fill="var(--c-coral-50)" stroke="var(--c-coral-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="11" fill="var(--c-coral-600)" text-anchor="middle" dominant-baseline="central" x="197" y="734">번뇌 이해하기</text>
-        </g>
-
-        <line x1="249" y1="666" x2="316" y2="716" stroke="var(--c-coral-100)" stroke-width="1" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('detach-ego')">
-          <rect x="248" y="716" width="148" height="36" rx="8" fill="var(--c-coral-50)" stroke="var(--c-coral-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="11" fill="var(--c-coral-600)" text-anchor="middle" dominant-baseline="central" x="322" y="734">자아 집착 줄이기</text>
-        </g>
-
-        <!-- ── CLUSTER E: 현재 순간 (BOTTOM CENTER) ── -->
-        <path d="M500 480 Q500 580 500 618" fill="none" stroke="var(--c-blue-100)" stroke-width="1.5" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('present')">
-          <rect x="404" y="620" width="192" height="46" rx="10" fill="var(--c-blue-50)" stroke="var(--c-blue-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="13" font-weight="500" fill="var(--c-blue-600)" text-anchor="middle" dominant-baseline="central" x="500" y="643">현재 순간 깨어있기</text>
-        </g>
-
-        <line x1="432" y1="666" x2="366" y2="716" stroke="var(--c-blue-100)" stroke-width="1" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('present-resist')">
-          <rect x="296" y="716" width="140" height="36" rx="8" fill="var(--c-blue-50)" stroke="var(--c-blue-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="11" fill="var(--c-blue-600)" text-anchor="middle" dominant-baseline="central" x="366" y="734">저항 멈추기</text>
-        </g>
-
-        <line x1="500" y1="666" x2="500" y2="716" stroke="var(--c-blue-100)" stroke-width="1" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('present-surrender')">
-          <rect x="430" y="716" width="140" height="36" rx="8" fill="var(--c-blue-50)" stroke="var(--c-blue-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="11" fill="var(--c-blue-600)" text-anchor="middle" dominant-baseline="central" x="500" y="734">내맡김</text>
-        </g>
-
-        <line x1="568" y1="666" x2="634" y2="716" stroke="var(--c-blue-100)" stroke-width="1" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('present-painbody')">
-          <rect x="564" y="716" width="148" height="36" rx="8" fill="var(--c-blue-50)" stroke="var(--c-blue-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="11" fill="var(--c-blue-600)" text-anchor="middle" dominant-baseline="central" x="638" y="734">고통체 알아차리기</text>
-        </g>
-
-        <!-- ── CLUSTER F: 자기 신뢰 (BOTTOM RIGHT) ── -->
-        <path d="M560 480 Q670 570 760 620" fill="none" stroke="var(--c-pink-100)" stroke-width="1.5" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('selftrust')">
-          <rect x="714" y="620" width="178" height="46" rx="10" fill="var(--c-pink-50)" stroke="var(--c-pink-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="13" font-weight="500" fill="var(--c-pink-600)" text-anchor="middle" dominant-baseline="central" x="803" y="643">자기 신뢰 · 수용</text>
-        </g>
-
-        <line x1="750" y1="666" x2="686" y2="716" stroke="var(--c-pink-100)" stroke-width="1" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('selftrust-compare')">
-          <rect x="616" y="716" width="140" height="36" rx="8" fill="var(--c-pink-50)" stroke="var(--c-pink-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="11" fill="var(--c-pink-600)" text-anchor="middle" dominant-baseline="central" x="686" y="734">비교 내려놓기</text>
-        </g>
-
-        <line x1="803" y1="666" x2="803" y2="716" stroke="var(--c-pink-100)" stroke-width="1" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('selftrust-shadow')">
-          <rect x="733" y="716" width="140" height="36" rx="8" fill="var(--c-pink-50)" stroke="var(--c-pink-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="11" fill="var(--c-pink-600)" text-anchor="middle" dominant-baseline="central" x="803" y="734">그림자 통합</text>
-        </g>
-
-        <line x1="856" y1="666" x2="920" y2="716" stroke="var(--c-pink-100)" stroke-width="1" marker-end="url(#arr)"/>
-        <g class="node-clickable" onclick="showPopup('selftrust-imperfect')">
-          <rect x="850" y="716" width="148" height="36" rx="8" fill="var(--c-pink-50)" stroke="var(--c-pink-100)" stroke-width="0.5"/>
-          <text font-family="var(--font-sans)" font-size="11" fill="var(--c-pink-600)" text-anchor="middle" dominant-baseline="central" x="924" y="734">불완전함 수용</text>
-        </g>
-
-        <!-- LEGEND -->
-        <rect x="20" y="820" width="1060" height="1" fill="var(--color-border-tertiary)" opacity="0.5"/>
-        <circle cx="40" cy="848" r="5" fill="var(--c-purple-400)"/>
-        <text font-family="var(--font-sans)" font-size="11" fill="var(--color-text-secondary)" x="50" y="852">마음 관찰</text>
-        <circle cx="150" cy="848" r="5" fill="var(--c-teal-400)"/>
-        <text font-family="var(--font-sans)" font-size="11" fill="var(--color-text-secondary)" x="160" y="852">감정·끌어당김</text>
-        <circle cx="290" cy="848" r="5" fill="var(--c-amber-400)"/>
-        <text font-family="var(--font-sans)" font-size="11" fill="var(--color-text-secondary)" x="300" y="852">명상·수행</text>
-        <circle cx="400" cy="848" r="5" fill="var(--c-coral-400)"/>
-        <text font-family="var(--font-sans)" font-size="11" fill="var(--color-text-secondary)" x="410" y="852">집착 내려놓기</text>
-        <circle cx="530" cy="848" r="5" fill="var(--c-blue-400)"/>
-        <text font-family="var(--font-sans)" font-size="11" fill="var(--color-text-secondary)" x="540" y="852">현재 순간</text>
-        <circle cx="630" cy="848" r="5" fill="var(--c-pink-400)"/>
-        <text font-family="var(--font-sans)" font-size="11" fill="var(--color-text-secondary)" x="640" y="852">자기 신뢰·수용</text>
-      </svg>
-    </div>
-  </div>
-
-  <!-- TAB 2: CLUSTER CARDS -->
-  <div class="section" id="tab-clusters">
-    <div class="cluster-grid">
-      <div class="cluster-card" style="background:var(--c-purple-50);border-color:var(--c-purple-100);color:var(--c-purple-800)">
-        <h3>마음 관찰 (왓칭)</h3>
-        <ul>
-          <li>왓칭 — 생각을 바라보기</li>
-          <li>칼 융 — 그림자 작업</li>
-          <li>에크하르트 톨레 — 생각과 동일시 금지</li>
-          <li>달마 조사 — 집착 없이 수행</li>
-        </ul>
-      </div>
-      <div class="cluster-card" style="background:var(--c-teal-50);border-color:var(--c-teal-100);color:var(--c-teal-800)">
-        <h3>감정 · 끌어당김</h3>
-        <ul>
-          <li>끌어당김의 법칙 — 감정이 기도</li>
-          <li>직감 — 미래 신호 받기</li>
-          <li>가우르 고팔 — 행복은 선택</li>
-          <li>감사 상태 유지하기</li>
-        </ul>
-      </div>
-      <div class="cluster-card" style="background:var(--c-amber-50);border-color:var(--c-amber-100);color:var(--c-amber-600)">
-        <h3>명상 · 수행</h3>
-        <ul>
-          <li>달라이 라마 — 집중·분석 명상</li>
-          <li>명상으로 나를 치유 — 긴장 이완</li>
-          <li>에크하르트 톨레 — 현재 명상</li>
-          <li>일상 전체를 수행으로</li>
-        </ul>
-      </div>
-      <div class="cluster-card" style="background:var(--c-coral-50);border-color:var(--c-coral-100);color:var(--c-coral-600)">
-        <h3>집착 내려놓기</h3>
-        <ul>
-          <li>성철 스님 — 깨달음은 덜어냄</li>
-          <li>쇼펜하우어 — 욕망 줄이기</li>
-          <li>달마 조사 — 4가지 선병 피하기</li>
-          <li>결과 집착 없이 행동</li>
-        </ul>
-      </div>
-      <div class="cluster-card" style="background:var(--c-blue-50);border-color:var(--c-blue-100);color:var(--c-blue-600)">
-        <h3>현재 순간 깨어있기</h3>
-        <ul>
-          <li>에크하르트 톨레 — 지금만이 실재</li>
-          <li>성철 스님 — 지금에 살아라</li>
-          <li>달마 조사 — 일상이 수행</li>
-          <li>저항이 고통을 만든다</li>
-        </ul>
-      </div>
-      <div class="cluster-card" style="background:var(--c-pink-50);border-color:var(--c-pink-100);color:var(--c-pink-600)">
-        <h3>자기 신뢰 · 수용</h3>
-        <ul>
-          <li>에머슨 — 자기 신뢰</li>
-          <li>칼 융 — 불완전함 수용</li>
-          <li>뒤처짐 불안 — 각자의 속도</li>
-          <li>조건 없는 자기 사랑</li>
-        </ul>
-      </div>
-    </div>
-
-    <div style="background:var(--color-background-secondary);border-radius:12px;padding:16px;font-size:13px;color:var(--color-text-secondary);line-height:1.7">
-      <strong style="color:var(--color-text-primary);display:block;margin-bottom:6px">전체 관통 메시지</strong>
-      모든 내용은 하나의 흐름으로 연결됩니다 — <em>생각을 관찰하고 → 감정을 다스리며 → 명상으로 훈련하고 → 집착을 내려놓아 → 현재에 깨어 → 자기를 온전히 신뢰한다.</em>
-    </div>
-  </div>
-
-  <!-- TAB 3: CHECKLIST -->
-  <div class="section" id="tab-checklist">
-    <div class="progress-label" id="prog-label">진행률: 0 / 24 완료</div>
-    <div class="progress-bar-wrap"><div class="progress-bar" id="prog-bar" style="width:0%"></div></div>
-
-    <div class="checklist-section">
-      <h3>1단계 — 마음 관찰 시작하기</h3>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">생각이 올라올 때 판단 없이 바라보기 연습</div><div class="check-sub">하루 3회 이상, 생각을 관찰자 시점으로 보기</div></div></div>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">생각과 나 사이에 거리 만들기</div><div class="check-sub">"나는 이 생각이 아니다" 인식 훈련</div></div></div>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">억누르지 않고 바라보면 사라진다 경험하기</div><div class="check-sub">작은 불안이나 짜증을 실험 대상으로</div></div></div>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">저녁에 "오늘 가장 불편했던 감정" 한 줄 기록</div><div class="check-sub">그림자 작업의 첫걸음 (칼 융)</div></div></div>
-    </div>
-
-    <div class="checklist-section">
-      <h3>2단계 — 명상 기초 세우기</h3>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">매일 10분 호흡 명상 루틴 확립</div><div class="check-sub">자세 안정 → 호흡 집중 → 생각 흘려보내기</div></div></div>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">아침 30분 디지털 기기 끄기</div><div class="check-sub">내면 침묵 공간 만들기 (칼 융)</div></div></div>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">식사·걷기·설거지 중 한 가지를 명상으로</div><div class="check-sub">일상 수행 — "지금 이 순간에 완전히 집중"</div></div></div>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">대화 후 3초 침묵 습관 들이기</div><div class="check-sub">반응하기 전 내면 신호 감지</div></div></div>
-    </div>
-
-    <div class="checklist-section">
-      <h3>3단계 — 감정·끌어당김 실천</h3>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">원하는 상황을 이미 이룬 것처럼 느끼기</div><div class="check-sub">끌어당김의 법칙 — 감정이 먼저, 현실은 따라온다</div></div></div>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">감사 일기 3가지 매일 쓰기</div><div class="check-sub">충만감과 감사 상태가 현실을 바꾼다</div></div></div>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">직감이 오면 기록하고 결과 추적하기</div><div class="check-sub">직감 = 미래 신호, 믿고 따르는 연습</div></div></div>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">고통이 올 때 "이 신호가 말하는 것은?" 질문</div><div class="check-sub">고통을 제거 대상이 아닌 방향 안내로 해석</div></div></div>
-    </div>
-
-    <div class="checklist-section">
-      <h3>4단계 — 집착 내려놓기</h3>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">결과 집착 없이 과정에 몰입하는 경험 하나</div><div class="check-sub">성철 스님 — 결과 집착 없이 행동할 때 최고 결과</div></div></div>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">SNS·비교에서 하루 한 번 의도적으로 벗어나기</div><div class="check-sub">고통은 현실이 아니라 비교에서 온다</div></div></div>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">바꿀 수 없는 것 하나를 수용하기 (CAR 법칙)</div><div class="check-sub">Change → Accept → Rise (가우르 고팔)</div></div></div>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">달마의 4가지 선병 중 내게 해당하는 것 파악</div><div class="check-sub">직공병·자향병·구호병·만신병 자가 진단</div></div></div>
-    </div>
-
-    <div class="checklist-section">
-      <h3>5단계 — 자기 신뢰·영적 성장 심화</h3>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">조건 없는 자기 수용 선언문 작성</div><div class="check-sub">"나는 ~해야 가치 있다" 믿음을 "나는 지금 충분하다"로</div></div></div>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">내면의 목소리를 무시하지 않기</div><div class="check-sub">사소한 느낌도 기록, 직관 채널 열기</div></div></div>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">영적 각성 중 힘든 구간을 포기 신호가 아닌 성장으로</div><div class="check-sub">칼 융 — 자아 붕괴는 재탄생의 전 단계</div></div></div>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">자연 접촉, 고독 시간 주 3회 이상 확보</div><div class="check-sub">몸 환경 + 마음 상태 동시 리셋</div></div></div>
-    </div>
-
-    <div class="checklist-section">
-      <h3>6단계 — 통합 · 일상화</h3>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">내 속도와 타인의 속도가 다름을 매일 상기</div><div class="check-sub">우리는 같은 트랙에서 달리는 게 아니다</div></div></div>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">상담·멘토·성장 그룹 연결 — 혼자 하지 않기</div><div class="check-sub">영적 성장의 지속 조건 (칼 융)</div></div></div>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">한 달 회고 — 어떤 단계가 성장했는가 점검</div><div class="check-sub">6개 클러스터별 나의 현재 위치 체크</div></div></div>
-      <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div><div class="check-label">글쓰기·예술·표현으로 내면 통합 작업</div><div class="check-sub">창의성 유지 = 영적 성장의 필수 조건</div></div></div>
-    </div>
-  </div>
-
-  <!-- TAB 4: ROUTINE -->
-  <div class="section" id="tab-routine">
-    <div class="section-label">아침</div>
-    <div class="routine-timeline">
-      <div class="time-block">
-        <div class="time-label">기상 직후</div>
-        <div class="time-dot" style="background:var(--c-amber-400)"></div>
-        <div class="time-content" style="background:var(--c-amber-50);border-color:var(--c-amber-100)">
-          <h4 style="color:var(--c-amber-600)">디지털 금식 + 침묵 30분</h4>
-          <p style="color:var(--c-amber-600)">폰·TV 끄기. 창문 열고 자연광 받기. 아무것도 소비하지 않고 내면 소리 듣기.</p>
-          <div class="tags"><span class="tag" style="background:var(--c-amber-100);color:var(--c-amber-600)">칼 융 · 내적 침묵</span></div>
-        </div>
-      </div>
-      <div class="time-block">
-        <div class="time-label">기상 후 30분</div>
-        <div class="time-dot" style="background:var(--c-purple-400)"></div>
-        <div class="time-content" style="background:var(--c-purple-50);border-color:var(--c-purple-100)">
-          <h4 style="color:var(--c-purple-800)">집중 명상 10분</h4>
-          <p style="color:var(--c-purple-800)">등 곧게 세우고 앉기 → 호흡 집중 → 생각이 오면 판단 없이 흘려보내기. 왓칭 연습.</p>
-          <div class="tags"><span class="tag" style="background:var(--c-purple-100);color:var(--c-purple-800)">왓칭 · 달라이 라마</span></div>
-        </div>
-      </div>
-      <div class="time-block">
-        <div class="time-label">아침 식사 중</div>
-        <div class="time-dot" style="background:var(--c-teal-400)"></div>
-        <div class="time-content" style="background:var(--c-teal-50);border-color:var(--c-teal-100)">
-          <h4 style="color:var(--c-teal-800)">감사 3가지 + 오늘의 의도 설정</h4>
-          <p style="color:var(--c-teal-800)">이미 이루어진 감정으로 하루를 시작. "오늘 나는 어떤 상태로 존재할 것인가?" 한 문장.</p>
-          <div class="tags"><span class="tag" style="background:var(--c-teal-100);color:var(--c-teal-800)">끌어당김 · 가우르 고팔</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="section-label">낮</div>
-    <div class="routine-timeline">
-      <div class="time-block">
-        <div class="time-label">오전 중</div>
-        <div class="time-dot" style="background:var(--c-blue-400)"></div>
-        <div class="time-content" style="background:var(--c-blue-50);border-color:var(--c-blue-100)">
-          <h4 style="color:var(--c-blue-600)">현재 순간 알아차리기 (매 시간)</h4>
-          <p style="color:var(--c-blue-600)">매 시간 1분, 지금 몸의 감각·감정 체크. "나는 지금 무엇을 느끼는가?" 내면 신호 감지.</p>
-          <div class="tags"><span class="tag" style="background:var(--c-blue-100);color:var(--c-blue-600)">에크하르트 톨레</span></div>
-        </div>
-      </div>
-      <div class="time-block">
-        <div class="time-label">점심 후</div>
-        <div class="time-dot" style="background:var(--c-amber-400)"></div>
-        <div class="time-content" style="background:var(--c-amber-50);border-color:var(--c-amber-100)">
-          <h4 style="color:var(--c-amber-600)">걷기 명상 10~15분</h4>
-          <p style="color:var(--c-amber-600)">발바닥 감각·바람·소리에 완전히 집중. 생각이 오면 발걸음으로 돌아오기. 자연과 접촉.</p>
-          <div class="tags"><span class="tag" style="background:var(--c-amber-100);color:var(--c-amber-600)">일상 수행 · 전홍준</span></div>
-        </div>
-      </div>
-      <div class="time-block">
-        <div class="time-label">업무·활동 중</div>
-        <div class="time-dot" style="background:var(--c-coral-400)"></div>
-        <div class="time-content" style="background:var(--c-coral-50);border-color:var(--c-coral-100)">
-          <h4 style="color:var(--c-coral-600)">결과 집착 없이 과정 몰입</h4>
-          <p style="color:var(--c-coral-600)">잘하려는 욕심을 내려놓고 지금 이 행동 자체에 집중. 비교 충동이 오면 알아차리기.</p>
-          <div class="tags"><span class="tag" style="background:var(--c-coral-100);color:var(--c-coral-600)">성철 스님 · 쇼펜하우어</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="section-label">저녁</div>
-    <div class="routine-timeline">
-      <div class="time-block">
-        <div class="time-label">저녁 식사</div>
-        <div class="time-dot" style="background:var(--c-teal-400)"></div>
-        <div class="time-content" style="background:var(--c-teal-50);border-color:var(--c-teal-100)">
-          <h4 style="color:var(--c-teal-800)">식사 명상 + 몸 감각 체크</h4>
-          <p style="color:var(--c-teal-800)">맛·향·씹는 감각에 집중. 긴장된 몸 부위 인식 → 의도적으로 이완. 만성 긴장 해소.</p>
-          <div class="tags"><span class="tag" style="background:var(--c-teal-100);color:var(--c-teal-800)">명상으로 치유 · 전홍준</span></div>
-        </div>
-      </div>
-      <div class="time-block">
-        <div class="time-label">취침 1시간 전</div>
-        <div class="time-dot" style="background:var(--c-pink-400)"></div>
-        <div class="time-content" style="background:var(--c-pink-50);border-color:var(--c-pink-100)">
-          <h4 style="color:var(--c-pink-600)">그림자 일기 + 자기 수용 루틴</h4>
-          <p style="color:var(--c-pink-600)">오늘 가장 불편했던 감정 1가지 기록 → "이 감정은 무엇을 말하려는가?" → 직감·통찰 기록.</p>
-          <div class="tags"><span class="tag" style="background:var(--c-pink-100);color:var(--c-pink-600)">칼 융 그림자 작업</span></div>
-        </div>
-      </div>
-      <div class="time-block">
-        <div class="time-label">취침 직전</div>
-        <div class="time-dot" style="background:var(--c-purple-400)"></div>
-        <div class="time-content" style="background:var(--c-purple-50);border-color:var(--c-purple-100)">
-          <h4 style="color:var(--c-purple-800)">이완 명상 + 내맡김</h4>
-          <p style="color:var(--c-purple-800)">몸 전체 스캔 후 이완. 오늘의 모든 것을 내려놓기. "나는 충분히 했다. 지금 이대로 충분하다."</p>
-          <div class="tags"><span class="tag" style="background:var(--c-purple-100);color:var(--c-purple-800)">에크하르트 톨레 · 달마 조사</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div style="background:var(--color-background-secondary);border-radius:12px;padding:14px 16px;margin-top:20px;font-size:12px;color:var(--color-text-secondary);line-height:1.7">
-      <strong style="color:var(--color-text-primary);font-size:13px">주간 추가 루틴</strong><br>
-      <span style="display:inline-block;margin-top:4px">주 3회 — 자연 접촉 / 맨발 걷기 / 햇빛 30분 · 주 1회 — 한 주 회고 (6개 클러스터 체크) · 월 1회 — 성장 일기 정리 & 다음 단계 설정</span>
-    </div>
+  <div class="topbar-right">
+    <button id="edit-mode-btn" onclick="toggleEditMode()">✏️ 노드 위치 수정</button>
+    <button class="toggle-btn" onclick="toggleTheme()">
+      <span id="toggle-label">다크모드</span>
+      <div class="toggle-track"><div class="toggle-thumb" id="toggle-thumb">🌙</div></div>
+    </button>
   </div>
 </div>
-
+<div id="edit-toolbar">
+  <span class="edit-hint"><b>✏️ 편집 모드</b> — 노드를 드래그해서 자유롭게 위치를 바꾸세요 (터치 지원)</span>
+  <div class="toolbar-btns">
+    <button class="tb-btn" onclick="spreadMore()">↔ 더 넓게</button>
+    <button class="tb-btn" onclick="spreadLess()">↕ 더 좁게</button>
+    <button class="tb-btn" onclick="resetLayout()">🔄 초기화</button>
+    <button class="tb-btn" onclick="toggleEditMode()">✅ 편집 완료</button>
+  </div>
+</div>
+<div class="svg-scroll">
+<svg id="mm" viewBox="0 0 1000 900" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="gc" x1="0" y1="0" x2="1" y2="1">
+    <stop id="gca" offset="0%" stop-color="#7F77DD"/>
+    <stop id="gcb" offset="100%" stop-color="#3C3489"/>
+  </linearGradient>
+</defs>
+<g id="links"></g>
+<g id="nodes"></g>
+</svg>
+</div>
+</div>
 <script>
-/* ── TAB ── */
-function switchTab(id){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.getElementById('tab-'+id).classList.add('active');
-  event.target.classList.add('active');
-}
+const CX=500,CY=450;
+const NS='http://www.w3.org/2000/svg';
+const PW=132,PH=52,CW=110,CH=44;
 
-/* ── CHECKLIST ── */
-var total=0,done=0;
-function toggle(el){
-  var box=el.querySelector('.check-box');
-  var lbl=el.querySelector('.check-label');
-  var isDone=box.classList.toggle('done');
-  lbl.classList.toggle('done',isDone);
-  done=document.querySelectorAll('.check-box.done').length;
-  total=document.querySelectorAll('.check-box').length;
-  document.getElementById('prog-label').textContent='진행률: '+done+' / '+total+' 완료';
-  document.getElementById('prog-bar').style.width=Math.round(done/total*100)+'%';
-}
-window.addEventListener('load',function(){
-  total=document.querySelectorAll('.check-box').length;
-  document.getElementById('prog-label').textContent='진행률: 0 / '+total+' 완료';
-});
+const clusters=[
+  {key:'watching',label:'마음 관찰',sub:'왓칭',cat:'purple',
+   children:[{key:'watching-observe',label:'생각을\n바라보기'},{key:'watching-observer',label:'관찰자로\n살아가기'},{key:'watching-empty',label:'텅 빈\n의식 상태'}]},
+  {key:'attraction',label:'감정·끌어당김',sub:'끌어당김의 법칙',cat:'teal',
+   children:[{key:'attraction-feeling',label:'이미 이룬\n감정'},{key:'attraction-gratitude',label:'감사·충만\n상태'},{key:'intuition',label:'직감\n따르기'}]},
+  {key:'meditation',label:'명상·수행',sub:'달라이 라마',cat:'amber',
+   children:[{key:'meditation-focus',label:'집중\n명상'},{key:'meditation-analysis',label:'분석\n명상'},{key:'meditation-daily',label:'일상\n수행'}]},
+  {key:'detach',label:'집착 내려놓기',sub:'달마 조사',cat:'coral',
+   children:[{key:'detach-pain',label:'고통은\n신호'},{key:'detach-karma',label:'번뇌\n이해하기'},{key:'detach-ego',label:'자아 집착\n줄이기'}]},
+  {key:'present',label:'현재 순간',sub:'에크하르트 톨레',cat:'blue',
+   children:[{key:'present-resist',label:'저항\n멈추기'},{key:'present-surrender',label:'내맡김'},{key:'present-painbody',label:'고통체\n알아차리기'}]},
+  {key:'selftrust',label:'자기 신뢰·수용',sub:'칼 융',cat:'pink',
+   children:[{key:'selftrust-compare',label:'비교\n내려놓기'},{key:'selftrust-shadow',label:'그림자\n통합'},{key:'selftrust-imperfect',label:'불완전함\n수용'}]},
+];
 
-/* ── POPUP DATA ── */
-var POPUP_DATA = {
-  'center': {
-    title: '내면 성장 종합 시스템',
-    source: '전체 콘텐츠 통합 핵심',
-    color: '#7F77DD',
-    items: [
-      '생각을 관찰하고 → 감정을 다스리며 → 명상으로 훈련하고 → 집착을 내려놓아 → 현재에 깨어 → 자기를 온전히 신뢰한다',
-      '왓칭 · 끌어당김의 법칙 · 직감 · 달라이 라마 · 에크하르트 톨레 · 칼 융 · 달마 조사 · 가우르 고팔 · 쇼펜하우어의 가르침을 하나의 시스템으로 통합',
-    ],
-    quote: '감정으로 현실을 만들고, 직감으로 방향을 선택하며, 관찰자로 살아갈 때 진정한 자유가 온다.'
-  },
-  'watching': {
-    title: '마음 관찰 (왓칭)',
-    source: '📖 왓칭',
-    color: '#534AB7',
-    items: [
-      '생각을 억누르지 말고 그냥 바라보기 — 바라보는 순간 생각과 나 사이에 거리가 생기고, 생각은 자연스럽게 사라진다',
-      '반복하면 마음이 점점 비워지고 맑아지며 시야(의식)가 확장된다',
-      '인간은 두 가지 존재: 육신의 나(물질적·제한적)와 빛(의식)의 나(비물질적·무한)로 구성된다',
-      '관찰자 효과 — 세상은 관찰 방식에 따라 변화하며 현실은 의식에 의해 형성된다',
-    ],
-    quote: '생각을 내려놓고 바라볼 때, 우리는 제한된 "나"에서 벗어나 더 큰 의식과 연결된다.'
-  },
-  'watching-observe': {
-    title: '생각을 바라보기',
-    source: '📖 왓칭 — 관찰의 원리',
-    color: '#534AB7',
-    items: [
-      '생각이 올라오면 → 판단 없이 보기',
-      '억지로 없애려 하지 않기',
-      '생각/감정 = 붙잡을 때만 유지되는 에너지 — 억누르면 강해지고, 바라보면 사라진다',
-      '텅 빈 공간을 상상하고 시야를 넓게 유지하기',
-    ],
-    quote: '바라보는 순간, 생각과 나 사이에 거리가 발생한다.'
-  },
-  'watching-observer': {
-    title: '관찰자로 살아가기',
-    source: '📖 왓칭 + 에크하르트 톨레',
-    color: '#534AB7',
-    items: [
-      '나는 생각이나 감정이 아니라 그것을 바라보는 의식이다',
-      '생각과 감정을 알아차리는 순간, 그것에 끌려가지 않게 된다',
-      '삶의 핵심은 생각에 휘둘리는 것이 아니라 관찰자로 살아가는 것',
-      '이것이 에고로부터 자유로워지는 유일한 방법이다',
-    ],
-    quote: '우리는 제한된 육신이 아니라 무한한 의식(공간)이다.'
-  },
-  'watching-empty': {
-    title: '텅 빈 의식 상태',
-    source: '📖 왓칭 + 명상으로 나를 치유하는 시간',
-    color: '#534AB7',
-    items: [
-      '생각이 사라진 상태 = 공(空) = 본래의 나 = 순수한 의식',
-      '이때 평온, 충만감, 확장감을 경험하게 된다',
-      '텅 빈 상태의 능력: 집중력 증가 · 창의력 상승 · 직관 활성화 · 문제 해결 능력 향상',
-      '깨달음 = 특별한 능력이 아니라 "텅 빈 마음 상태" — 생각과 감정에 휘둘리지 않고 항상 현재에 존재',
-    ],
-    quote: '텅 빈 상태는 공허함이 아니라 가장 충만한 상태다.'
-  },
-  'attraction': {
-    title: '감정 · 끌어당김의 법칙',
-    source: '📖 끌어당김의 법칙',
-    color: '#0F6E56',
-    items: [
-      '기도의 본질 — 기도는 말이나 형식이 아니라 느낌(감정) 자체',
-      '잘못된 기도: "~해 주세요" (결핍 기반) → 오히려 부족함을 강화',
-      '올바른 방법: 결과가 이미 이루어진 감정 → 오감으로 현실처럼 느끼기 → 감사 감정',
-      '우주의 언어는 말이 아니라 감정 / 느낌 / 상태이다',
-    ],
-    quote: '원하는 것을 구하지 말고, 이미 이루어진 감정을 살아라.'
-  },
-  'attraction-feeling': {
-    title: '이미 이룬 감정',
-    source: '📖 끌어당김의 법칙',
-    color: '#0F6E56',
-    items: [
-      '핵심 공식: 원하는 결과 → 이미 이루어진 감정 → 현실로 투영',
-      '감정 → 에너지장 → 현실 반영 (우리의 내면 상태가 현실을 만든다)',
-      '치유를 "요청"하면 질병에 집중되고, 이미 나은 감정을 느끼면 치유가 일어난다',
-      '아메리카 원주민: 비를 "달라"고 기도하지 않고 비가 오는 상황을 생생하게 느끼고 체험한다',
-    ],
-    quote: '이미 이루어진 것처럼 감정을 먼저 느끼는 것이 핵심이다.'
-  },
-  'attraction-gratitude': {
-    title: '감사 · 충만 상태',
-    source: '📖 끌어당김의 법칙 + 가우르 고팔 다스',
-    color: '#0F6E56',
-    items: [
-      '감사는 정확한 기억이다 — 받은 친절과 선함을 기억하는 것이 용서와 관계 유지를 가능하게 한다',
-      '행복은 외부 상황이 아니라 내가 매 순간 결정하는 것이다',
-      '이미 가진 것을 쓰지 않고 채우려고만 하면 행복은 사라진다 (99 함정)',
-      '충만감·편안함 상태를 유지하는 것이 현실 창조의 기반이다',
-    ],
-    quote: '행복은 목적지에 도달했을 때가 아니라 여행하는 지금 이 순간에 있다.'
-  },
-  'intuition': {
-    title: '직감 따르기',
-    source: '📖 당신의 느낌을 믿어라 — 직감이 뛰어난 사람 특징 5가지',
-    color: '#0F6E56',
-    items: [
-      '직감 = 가장 강력한 능력 — Steve Jobs: 직관은 지능보다 강력, Einstein: 직감은 인간의 핵심 능력',
-      '창조는 만드는 게 아니라 이미 있는 것을 끌어오는 것 (Mozart, Michelangelo)',
-      '미래는 이미 존재하고 직감은 그 신호를 받는 기능이다',
-      '직감이 강한 사람 특징: 혼자 있는 시간 확보 · 내면의 목소리 존중 · 감정과 연결 · 명상/성찰 습관',
-      '꿈 = 무의식의 메시지 (McCartney의 Yesterday), 우연은 없다 — 모든 사건은 연결되어 있다',
-    ],
-    quote: '미래는 이미 감지되고 있고, 직감은 그 신호다.'
-  },
-  'meditation': {
-    title: '명상 · 수행',
-    source: '📖 달라이 라마 + 명상으로 나를 치유하는 시간',
-    color: '#854F0B',
-    items: [
-      '명상은 단순한 휴식이 아니라 마음을 훈련하는 기술',
-      '효과: 스트레스 감소 · 집중력/기억력 향상 · 감정 조절 능력 상승 · 수면 개선 · 면역력 강화 · 뇌 기능 변화',
-      '고통의 원인 = 생각 + 집착 / 치유의 시작 = 긴장을 푸는 것',
-      '인간의 고통 원인 = 잘못된 인식(무지) — 내면이 바뀌지 않으면 세상도 바뀌지 않는다',
-    ],
-    quote: '행복은 밖에서 얻는 게 아니라, 마음을 이해하고 다루는 능력에서 나온다.'
-  },
-  'meditation-focus': {
-    title: '집중 명상',
-    source: '📖 달라이 라마가 전하는 명상 가이드',
-    color: '#854F0B',
-    items: [
-      '자세 안정 (등 곧게) → 호흡에 집중 → 생각 떠오르면 다시 돌아오기',
-      '산만함 ↓ / 감정 통제 ↑ / 통찰력 ↑',
-      '마음을 한 곳에 고정하는 훈련 — 외부 자극이 아닌 내면으로 주의를 모으는 연습',
-      '달마 조사의 화두 수행: 논리가 아닌 직관으로 — 일상의 모든 순간이 수행이 된다',
-    ],
-    quote: '마음이 고요해질수록 더 명확하게 볼 수 있다.'
-  },
-  'meditation-analysis': {
-    title: '분석 명상',
-    source: '📖 달라이 라마가 전하는 명상 가이드',
-    color: '#854F0B',
-    items: [
-      '본질을 탐구하는 명상 — 모든 것은 고정된 실체 없이 서로 의존해서 존재한다(연기)',
-      '변하지 않는 것은 없고, 독립적으로 존재하는 것도 없다는 것을 직접 탐구',
-      '이것을 깨달으면: 집착 ↓ / 분노 ↓ / 마음이 가벼워짐',
-      '고통은 현실 때문이 아니라 해석 때문에 생긴다는 것을 이해하게 된다',
-    ],
-    quote: '지혜는 지식이 아니라 직접 경험으로 얻는 것이다.'
-  },
-  'meditation-daily': {
-    title: '일상 수행',
-    source: '📖 명상으로 나를 치유하는 시간 + 달마 조사',
-    color: '#854F0B',
-    items: [
-      '일상 전체를 명상으로 만들 수 있다: 밥 먹기 → 식사 명상 / 걷기 → 걷기 명상 / 설거지 → 설거지 명상',
-      '핵심: 지금 이 순간에 완전히 집중하는 것',
-      '달마 조사: 먹기, 걷기, 일하기 = 수행 / 자기 관찰 — 지금 이 생각은 어디서 오는가?',
-      '4가지 치유 방법: 수용하기 · 자각하기(관찰) · 내려놓기 · 본성(참나)에 집중',
-    ],
-    quote: '수행은 앉아서 하는 것이 아니라 삶 전체가 수행이다.'
-  },
-  'detach': {
-    title: '집착 내려놓기',
-    source: '📖 달마 조사 + 쇼펜하우어',
-    color: '#993C1D',
-    items: [
-      '달마의 4가지 선병: ① 직공병(공에 집착) ② 자향병(형식 집착) ③ 구호병(깨달음 욕심) ④ 만신병(교만)',
-      '모든 병을 다스리는 단 하나의 원칙: "진지하게 하되, 집착하지 않는다"',
-      '쇼펜하우어: 욕망이 클수록 고통이 크다. 고독을 즐기고 욕망을 줄이며 정신을 성장시키는 삶이 최고의 삶',
-      '뜨거운 컵을 쥐고 있는 상태 = 집착 / 집착하지 않으면 고통도 사라진다',
-    ],
-    quote: '집착 없이, 꾸준히, 자연스럽게.'
-  },
-  'detach-pain': {
-    title: '고통은 신호',
-    source: '📖 칼 융 심리학 + 명상으로 나를 치유하는 시간',
-    color: '#993C1D',
-    items: [
-      '성장형 고통 → 계속 감수 (운동, 학습) / 파괴형 고통 → 바꿔야 함 (관계, 환경)',
-      '핵심 질문: "이 고통은 나에게 무엇을 바꾸라고 말하는가?"',
-      '영적 각성에서 힘든 구간 = 포기 신호가 아니라 성장의 전 단계 (자아의 죽음)',
-      '효과: 삶의 방향 수정 · 반복 실수 감소 · 회복력 증가',
-    ],
-    quote: '고통은 일시적이지만, 진짜가 아닌 삶은 평생 지속된다.'
-  },
-  'detach-karma': {
-    title: '번뇌 이해하기',
-    source: '📖 달라이 라마 + 달마 조사',
-    color: '#993C1D',
-    items: [
-      '집착(탐욕), 분노, 질투 → 결국 고통으로 이어진다',
-      '선병은 병이면서 동시에 약이다 — 집착 자체가 수행 중이라는 증거',
-      '번뇌의 원인: 세상을 있는 그대로 보지 못하고 왜곡해서 봄 (무지)',
-      '해결 방법: 지혜(연기법 이해) + 연민(자애) → 집착이 줄고 마음이 가벼워짐',
-    ],
-    quote: '문제는 번뇌 자체가 아니라 번뇌에 대한 집착이다.'
-  },
-  'detach-ego': {
-    title: '자아 집착 줄이기',
-    source: '📖 칼 융 영적 각성 + 달마 조사',
-    color: '#993C1D',
-    items: [
-      '자아가 방해하는 5가지 메커니즘: 합리화 · 주의 분산 · 영적 팽창(가장 위험) · 투사 · 퇴행',
-      '영적 팽창 경계: "나는 깨달은 사람이다"라는 생각이 가장 위험한 상태',
-      '자아 집착의 결과: 에고가 더 강화됨 / 남 가르치려 함 / 인정받고 싶어함',
-      '진짜 깨달음 = 겸손 + 자비 / 가짜 나를 죽이고 진짜 나를 만드는 과정',
-    ],
-    quote: '영적 각성은 더 나은 사람이 되는 과정이 아니라, 가짜 나를 죽이고 진짜 나를 만드는 과정이다.'
-  },
-  'present': {
-    title: '현재 순간 깨어있기',
-    source: '📖 에크하르트 톨레 100분 연속듣기',
-    color: '#185FA5',
-    items: [
-      '지금 이 순간만이 존재한다 — 과거는 기억 속에서만, 미래는 오면 이미 지금이 된다',
-      '저항이 고통을 만든다 — 고통은 상황 자체가 아니라 있는 그대로를 거부하는 마음에서 온다',
-      '지금을 받아들일 때 내면의 깊은 평화가 드러난다',
-      '현존할 때 형태와 시간을 초월한 근원과 연결된다 — 이것을 깨달음이라 한다',
-    ],
-    quote: '지금으로부터 도망칠 수 없다면, 지금을 친구로 삼는 것이 현명하다.'
-  },
-  'present-resist': {
-    title: '저항 멈추기',
-    source: '📖 에크하르트 톨레',
-    color: '#185FA5',
-    items: [
-      '생각의 차원에서는 판단으로, 감정의 차원에서는 부정적 감정으로 저항이 나타난다',
-      '있는 그대로를 받아들이는 것은 포기가 아니다',
-      '내면에서 저항하지 않으면서도 필요한 행동은 분명히 할 수 있다',
-      '진정한 힘은 저항이 아니라 현존에서 나온다',
-    ],
-    quote: '저항하지 않음은 수동이 아니라 가장 강력한 내적 행동이다.'
-  },
-  'present-surrender': {
-    title: '내맡김',
-    source: '📖 에크하르트 톨레 + 명상으로 나를 치유하는 시간',
-    color: '#185FA5',
-    items: [
-      '내맡김 = 있는 그대로를 받아들이는 것, 포기가 아니라 더 큰 흐름에 합류하는 것',
-      '가우르 고팔의 CAR 법칙: Change(바꿀 수 있는 것) → Accept(받아들이기) → Rise(더 높은 시각으로)',
-      '과거에 묶이면 고통 / 현재에 머물면 치유',
-      '"나는 충분히 했다. 지금 이대로 충분하다" — 취침 전 내맡김 루틴',
-    ],
-    quote: '내맡김은 실패가 아니라 지혜로운 선택이다.'
-  },
-  'present-painbody': {
-    title: '고통체 알아차리기',
-    source: '📖 에크하르트 톨레',
-    color: '#185FA5',
-    items: [
-      '고통체 = 과거의 감정적 고통이 몸과 마음에 쌓인 것',
-      '고통체는 더 많은 고통을 먹고 살며, 우리를 지배하려 한다',
-      '해법은 싸우는 것이 아니라 조용히 관찰하는 것',
-      '알아차리는 순간 고통체와의 동일화가 끊어진다',
-    ],
-    quote: '알아차림이 치유의 시작이다.'
-  },
-  'selftrust': {
-    title: '자기 신뢰 · 수용',
-    source: '📖 칼 융 심리학 + 가우르 고팔 다스',
-    color: '#993556',
-    items: [
-      '조건 없는 자기 수용 — "성공해야 인정, 잘해야 가치 있음" 믿음에서 벗어나기',
-      '행복의 책임은 나에게 있다 — 자신의 행복에 대한 결정권을 다른 사람에게 양도하지 말 것',
-      '영적으로 성숙한 사람의 4가지 핵심 습관: 그림자와의 대화 · 내적 침묵 · 고통을 신호로 해석 · 불완전함 수용',
-      '부러진 연필도 깎으면 다시 쓸 수 있다 — 무너졌다고 끝이 아니다',
-    ],
-    quote: '행복은 밖에서 얻는 것이 아니라, 내가 어떤 정신을 가진 사람이냐에 달려 있다.'
-  },
-  'selftrust-compare': {
-    title: '비교 내려놓기',
-    source: '📖 쇼펜하우어 + 가우르 고팔 다스',
-    color: '#993556',
-    items: [
-      '타인 시선, 욕망, 외부 집착이 불행의 원인이다',
-      '모든 사람은 좋은 점과 나쁜 점이 함께 오는 패키지다',
-      '우리는 같은 트랙에서 달리는 게 아니다 — 각자의 속도와 방향이 다르다',
-      '사회적 비교 → 고통 / 자기 기준으로의 선택 → 자유',
-    ],
-    quote: '나는 타인의 기준이 아닌 나 자신의 기준으로 산다.'
-  },
-  'selftrust-shadow': {
-    title: '그림자 통합',
-    source: '📖 칼 융 — 영적으로 성장한 사람들만 실천하는 습관',
-    color: '#993556',
-    items: [
-      '그림자 = 억압된 감정 + 욕망 + 재능까지 포함',
-      '핵심 행동: 하루 중 불편했던 순간을 떠올리고 "이 감정은 나에게 무엇을 말하려는가?" 질문하기',
-      '효과: 질투 → 내가 원하는 방향 발견 / 불편함 → 숨겨진 욕구 발견',
-      '영적 각성은 "더 나은 사람이 되는 과정"이 아니라 "자기 전체를 이해하고 통합하는 과정"',
-    ],
-    quote: '그림자를 억압하면 더 강해지고, 바라보고 통합하면 자유로워진다.'
-  },
-  'selftrust-imperfect': {
-    title: '불완전함 수용',
-    source: '📖 칼 융 심리학 + 가우르 고팔 다스',
-    color: '#993556',
-    items: [
-      '완벽 추구 = 스트레스의 원인 / 성숙한 사람 = 불완전함 자체를 인정',
-      '핵심 태도: 실수 → 숨기지 않음 / 부족함 → 자연스럽게 인정 / 인생 → 원래 예측 불가능',
-      '효과: 자기 수용 · 타인에 대한 관용 증가 · 관계 스트레스 감소',
-      '자기(Self)와의 대면 → 진짜 본질과 접촉 → 가치관 완전 재구성 → 유연한 삶 가능',
-    ],
-    quote: '불완전함을 인정할 때, 비로소 완전한 나로 살 수 있다.'
-  }
+const CAT_COLORS={
+  purple:{stroke:'#534AB7',linkStroke:'#7F77DD'},
+  teal:{stroke:'#1D9E75',linkStroke:'#1D9E75'},
+  amber:{stroke:'#EF9F27',linkStroke:'#BA7517'},
+  coral:{stroke:'#F0997B',linkStroke:'#993C1D'},
+  blue:{stroke:'#85B7EB',linkStroke:'#185FA5'},
+  pink:{stroke:'#D4537E',linkStroke:'#D4537E'},
 };
 
-/* ── POPUP FUNCTIONS ── */
-function showPopup(key){
-  var d = POPUP_DATA[key];
-  if(!d) return;
-
-  document.getElementById('popup-title').textContent = d.title;
-  document.getElementById('popup-source').textContent = d.source;
-
-  var body = document.getElementById('popup-body');
-  var html = '<div class="popup-items">';
-  d.items.forEach(function(item){
-    html += '<div class="popup-item" style="border-left-color:' + d.color + '">' + item + '</div>';
+/* 기본 위치 계산 — 겹치지 않는 고정 좌표 */
+function calcDefaultPos(){
+  const pos={};
+  const N=clusters.length;
+  const R_P=195, R_C=118, SPREAD=0.40;
+  clusters.forEach((cl,i)=>{
+    const angle=(i/N)*Math.PI*2-Math.PI/2;
+    const px=CX+R_P*Math.cos(angle);
+    const py=CY+R_P*Math.sin(angle);
+    pos[cl.key]={x:px,y:py};
+    const nc=cl.children.length;
+    cl.children.forEach((ch,j)=>{
+      const ca=angle+(j-(nc-1)/2)*SPREAD;
+      pos[ch.key]={x:px+R_C*Math.cos(ca),y:py+R_C*Math.sin(ca)};
+    });
   });
-  html += '</div>';
-  if(d.quote){
-    html += '<div class="popup-quote" style="border-left-color:' + d.color + '">' + d.quote + '</div>';
-  }
-  body.innerHTML = html;
+  return pos;
+}
 
+let DEFAULT_POS=calcDefaultPos();
+let positions=JSON.parse(JSON.stringify(DEFAULT_POS));
+
+/* 링크/노드 요소 참조 */
+const linkEls={};
+const nodeGEls={};
+
+function getCSSVar(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function svgE(tag,attrs){const e=document.createElementNS(NS,tag);for(const[k,v]of Object.entries(attrs))e.setAttribute(k,v);return e;}
+
+function buildSVG(){
+  document.getElementById('links').innerHTML='';
+  document.getElementById('nodes').innerHTML='';
+  Object.keys(linkEls).forEach(k=>delete linkEls[k]);
+  Object.keys(nodeGEls).forEach(k=>delete nodeGEls[k]);
+  const lop=getCSSVar('--link-opacity')||'0.45';
+
+  clusters.forEach(cl=>{
+    const p=positions[cl.key];
+    const cc=CAT_COLORS[cl.cat];
+    const fill=getCSSVar('--node-fill-'+cl.cat);
+    const stroke=getCSSVar('--node-stroke-'+cl.cat);
+    const tc=getCSSVar('--node-title-'+cl.cat);
+
+    /* center→parent */
+    const pp=svgE('path',{class:'link',d:`M ${CX} ${CY} Q ${(CX+p.x)/2} ${(CY+p.y)/2} ${p.x} ${p.y}`,stroke:cc.linkStroke});
+    pp.style.opacity=lop;
+    document.getElementById('links').appendChild(pp);
+    linkEls[cl.key]={parentPath:pp,childLines:[]};
+
+    /* parent g */
+    const pg=svgE('g',{class:'node-g'});
+    pg.dataset.key=cl.key; pg.dataset.isParent='1';
+    pg.onclick=()=>{if(!editMode)showPopup(cl.key);};
+    pg.appendChild(svgE('rect',{x:p.x-PW/2,y:p.y-PH/2,rx:11,width:PW,height:PH,fill,stroke,'stroke-width':1}));
+    const pt1=svgE('text',{class:'node-title',x:p.x,y:p.y-8,fill:tc}); pt1.textContent=cl.label;
+    const pt2=svgE('text',{class:'node-sub',x:p.x,y:p.y+10,fill:tc}); pt2.style.opacity='0.65'; pt2.textContent=cl.sub;
+    pg.appendChild(pt1); pg.appendChild(pt2);
+    makeDraggable(pg,cl.key);
+    document.getElementById('nodes').appendChild(pg);
+    nodeGEls[cl.key]=pg;
+
+    cl.children.forEach(ch=>{
+      const cp=positions[ch.key];
+      const cl2=svgE('line',{x1:p.x,y1:p.y,x2:cp.x,y2:cp.y,class:'child-link',stroke:cc.stroke});
+      cl2.style.opacity='0.5';
+      document.getElementById('links').appendChild(cl2);
+      linkEls[cl.key].childLines.push({line:cl2,childKey:ch.key});
+
+      const cg=svgE('g',{class:'node-g'});
+      cg.dataset.key=ch.key; cg.dataset.parentKey=cl.key;
+      cg.onclick=()=>{if(!editMode)showPopup(ch.key);};
+      cg.appendChild(svgE('rect',{x:cp.x-CW/2,y:cp.y-CH/2,rx:9,width:CW,height:CH,fill,stroke,'stroke-width':0.7}));
+      const lines=ch.label.split('\n');
+      if(lines.length===1){
+        const t=svgE('text',{class:'child-title',x:cp.x,y:cp.y,fill:tc}); t.textContent=lines[0]; cg.appendChild(t);
+      } else {
+        const t1=svgE('text',{class:'child-title',x:cp.x,y:cp.y-8,fill:tc}); t1.textContent=lines[0];
+        const t2=svgE('text',{class:'child-title',x:cp.x,y:cp.y+9,fill:tc}); t2.textContent=lines[1];
+        cg.appendChild(t1); cg.appendChild(t2);
+      }
+      makeDraggable(cg,ch.key);
+      document.getElementById('nodes').appendChild(cg);
+      nodeGEls[ch.key]=cg;
+    });
+  });
+
+  /* center */
+  const cg=svgE('g',{class:'node-g'});
+  cg.onclick=()=>{if(!editMode)showPopup('center');};
+  const el=svgE('ellipse',{cx:CX,cy:CY,rx:82,ry:42,fill:'url(#gc)',stroke:'#3C3489','stroke-width':1});
+  cg.appendChild(el);
+  const ct=svgE('text',{class:'node-title',x:CX,y:CY-11,fill:'#fff'}); ct.style.fontSize='13px'; ct.textContent='내면 성장';
+  const cs=svgE('text',{class:'node-sub',x:CX,y:CY+7,fill:getCSSVar('--center-sub')}); cs.style.fontSize='10px'; cs.textContent='종합 시스템';
+  const ch=svgE('text',{class:'node-sub',x:CX,y:CY+21,fill:getCSSVar('--center-sub')}); ch.style.fontSize='9px'; ch.textContent='클릭해서 개요 보기';
+  cg.appendChild(ct); cg.appendChild(cs); cg.appendChild(ch);
+  document.getElementById('nodes').appendChild(cg);
+  nodeGEls['center']=cg;
+}
+
+function updateNodePos(key){
+  const g=nodeGEls[key]; if(!g) return;
+  const p=positions[key];
+  const isP=!!g.dataset.isParent;
+  const W=isP?PW:CW, H=isP?PH:CH;
+  const rect=g.querySelector('rect');
+  if(rect){rect.setAttribute('x',p.x-W/2); rect.setAttribute('y',p.y-H/2);}
+  const texts=g.querySelectorAll('text');
+  if(isP){
+    if(texts[0]){texts[0].setAttribute('x',p.x); texts[0].setAttribute('y',p.y-8);}
+    if(texts[1]){texts[1].setAttribute('x',p.x); texts[1].setAttribute('y',p.y+10);}
+  } else {
+    if(texts.length===1){texts[0].setAttribute('x',p.x); texts[0].setAttribute('y',p.y);}
+    else if(texts.length>=2){
+      texts[0].setAttribute('x',p.x); texts[0].setAttribute('y',p.y-8);
+      texts[1].setAttribute('x',p.x); texts[1].setAttribute('y',p.y+9);
+    }
+  }
+}
+
+function updateAllLinks(movedKey){
+  clusters.forEach(cl=>{
+    const le=linkEls[cl.key]; if(!le) return;
+    const pp=positions[cl.key];
+    if(movedKey===cl.key){
+      le.parentPath.setAttribute('d',`M ${CX} ${CY} Q ${(CX+pp.x)/2} ${(CY+pp.y)/2} ${pp.x} ${pp.y}`);
+    }
+    le.childLines.forEach(({line,childKey})=>{
+      if(movedKey===cl.key||movedKey===childKey){
+        const cp=positions[childKey];
+        line.setAttribute('x1',pp.x); line.setAttribute('y1',pp.y);
+        line.setAttribute('x2',cp.x); line.setAttribute('y2',cp.y);
+      }
+    });
+  });
+}
+
+/* ── 드래그 ── */
+let editMode=false;
+let dragging=null;
+
+function getSVGScale(){
+  const r=document.getElementById('mm').getBoundingClientRect();
+  return{sx:1000/r.width,sy:900/r.height,left:r.left,top:r.top};
+}
+
+function makeDraggable(g,key){
+  function start(mx,my){
+    const{sx,sy,left,top}=getSVGScale();
+    dragging={key,g,
+      smx:(mx-left)*sx,smy:(my-top)*sy,
+      spx:positions[key].x,spy:positions[key].y};
+    g.classList.add('drag-active');
+  }
+  g.addEventListener('mousedown',e=>{if(!editMode)return; e.preventDefault(); e.stopPropagation(); start(e.clientX,e.clientY);});
+  g.addEventListener('touchstart',e=>{if(!editMode)return; e.preventDefault(); const t=e.touches[0]; start(t.clientX,t.clientY);},{passive:false});
+}
+
+document.addEventListener('mousemove',e=>{
+  if(!dragging)return;
+  const{sx,sy,left,top}=getSVGScale();
+  positions[dragging.key].x=dragging.spx+(e.clientX-left)*sx-dragging.smx;
+  positions[dragging.key].y=dragging.spy+(e.clientY-top)*sy-dragging.smy;
+  updateNodePos(dragging.key);
+  updateAllLinks(dragging.key);
+});
+document.addEventListener('mouseup',()=>{if(dragging){dragging.g.classList.remove('drag-active');dragging=null;}});
+document.addEventListener('touchmove',e=>{
+  if(!dragging)return; e.preventDefault();
+  const t=e.touches[0];
+  const{sx,sy,left,top}=getSVGScale();
+  positions[dragging.key].x=dragging.spx+(t.clientX-left)*sx-dragging.smx;
+  positions[dragging.key].y=dragging.spy+(t.clientY-top)*sy-dragging.smy;
+  updateNodePos(dragging.key);
+  updateAllLinks(dragging.key);
+},{passive:false});
+document.addEventListener('touchend',()=>{if(dragging){dragging.g.classList.remove('drag-active');dragging=null;}});
+
+/* ── 편집 모드 ── */
+function toggleEditMode(){
+  editMode=!editMode;
+  const btn=document.getElementById('edit-mode-btn');
+  const tb=document.getElementById('edit-toolbar');
+  const hint=document.getElementById('main-hint');
+  const svg=document.getElementById('mm');
+  if(editMode){
+    btn.textContent='✅ 편집 완료'; btn.classList.add('active');
+    tb.classList.add('visible');
+    hint.textContent='✏️ 편집 모드 — 노드를 드래그해서 이동하세요';
+    svg.classList.add('edit-mode');
+  } else {
+    btn.textContent='✏️ 노드 위치 수정'; btn.classList.remove('active');
+    tb.classList.remove('visible');
+    hint.textContent='💡 노드를 클릭하면 상세 내용을 볼 수 있습니다';
+    svg.classList.remove('edit-mode');
+  }
+}
+function resetLayout(){positions=JSON.parse(JSON.stringify(DEFAULT_POS));buildSVG();}
+function spreadMore(){
+  Object.keys(positions).forEach(k=>{positions[k].x=CX+(positions[k].x-CX)*1.13;positions[k].y=CY+(positions[k].y-CY)*1.13;});
+  buildSVG();
+}
+function spreadLess(){
+  Object.keys(positions).forEach(k=>{positions[k].x=CX+(positions[k].x-CX)*0.87;positions[k].y=CY+(positions[k].y-CY)*0.87;});
+  buildSVG();
+}
+
+/* ── 테마 ── */
+let isDark=false;
+function toggleTheme(){
+  isDark=!isDark;
+  document.documentElement.setAttribute('data-theme',isDark?'dark':'');
+  document.getElementById('toggle-label').textContent=isDark?'라이트모드':'다크모드';
+  document.getElementById('toggle-thumb').textContent=isDark?'☀️':'🌙';
+  buildSVG();
+}
+
+/* ── 팝업 데이터 ── */
+const POPUP_DATA={
+  center:{title:'내면 성장 종합 시스템',source:'전체 콘텐츠 통합 핵심',color:'#7F77DD',
+    items:['생각을 관찰하고 → 감정을 다스리며 → 명상으로 훈련하고 → 집착을 내려놓아 → 현재에 깨어 → 자기를 온전히 신뢰한다','왓칭 · 끌어당김의 법칙 · 직감 · 달라이 라마 · 에크하르트 톨레 · 칼 융 · 달마 조사 · 가우르 고팔 · 쇼펜하우어의 가르침을 하나의 시스템으로 통합'],
+    quote:'감정으로 현실을 만들고, 직감으로 방향을 선택하며, 관찰자로 살아갈 때 진정한 자유가 온다.'},
+  watching:{title:'마음 관찰 (왓칭)',source:'📖 왓칭',color:'#534AB7',items:['생각을 억누르지 말고 그냥 바라보기 — 바라보는 순간 생각과 나 사이에 거리가 생기고, 생각은 자연스럽게 사라진다','반복하면 마음이 점점 비워지고 맑아지며 시야(의식)가 확장된다','인간은 두 가지 존재: 육신의 나(물질적·제한적)와 빛(의식)의 나(비물질적·무한)로 구성된다','관찰자 효과 — 세상은 관찰 방식에 따라 변화하며 현실은 의식에 의해 형성된다'],quote:'생각을 내려놓고 바라볼 때, 우리는 제한된 "나"에서 벗어나 더 큰 의식과 연결된다.'},
+  'watching-observe':{title:'생각을 바라보기',source:'📖 왓칭 — 관찰의 원리',color:'#534AB7',items:['생각이 올라오면 → 판단 없이 보기','억지로 없애려 하지 않기','생각/감정 = 붙잡을 때만 유지되는 에너지 — 억누르면 강해지고, 바라보면 사라진다','텅 빈 공간을 상상하고 시야를 넓게 유지하기'],quote:'바라보는 순간, 생각과 나 사이에 거리가 발생한다.'},
+  'watching-observer':{title:'관찰자로 살아가기',source:'📖 왓칭 + 에크하르트 톨레',color:'#534AB7',items:['나는 생각이나 감정이 아니라 그것을 바라보는 의식이다','생각과 감정을 알아차리는 순간, 그것에 끌려가지 않게 된다','삶의 핵심은 생각에 휘둘리는 것이 아니라 관찰자로 살아가는 것','이것이 에고로부터 자유로워지는 유일한 방법이다'],quote:'우리는 제한된 육신이 아니라 무한한 의식(공간)이다.'},
+  'watching-empty':{title:'텅 빈 의식 상태',source:'📖 왓칭 + 명상으로 나를 치유하는 시간',color:'#534AB7',items:['생각이 사라진 상태 = 공(空) = 본래의 나 = 순수한 의식','이때 평온, 충만감, 확장감을 경험하게 된다','텅 빈 상태의 능력: 집중력 증가 · 창의력 상승 · 직관 활성화 · 문제 해결 능력 향상','깨달음 = 특별한 능력이 아니라 "텅 빈 마음 상태" — 생각과 감정에 휘둘리지 않고 항상 현재에 존재'],quote:'텅 빈 상태는 공허함이 아니라 가장 충만한 상태다.'},
+  attraction:{title:'감정 · 끌어당김의 법칙',source:'📖 끌어당김의 법칙',color:'#0F6E56',items:['기도의 본질 — 기도는 말이나 형식이 아니라 느낌(감정) 자체','잘못된 기도: "~해 주세요" (결핍 기반) → 오히려 부족함을 강화','올바른 방법: 결과가 이미 이루어진 감정 → 오감으로 현실처럼 느끼기 → 감사 감정','우주의 언어는 말이 아니라 감정 / 느낌 / 상태이다'],quote:'원하는 것을 구하지 말고, 이미 이루어진 감정을 살아라.'},
+  'attraction-feeling':{title:'이미 이룬 감정',source:'📖 끌어당김의 법칙',color:'#0F6E56',items:['핵심 공식: 원하는 결과 → 이미 이루어진 감정 → 현실로 투영','감정 → 에너지장 → 현실 반영 (우리의 내면 상태가 현실을 만든다)','치유를 "요청"하면 질병에 집중되고, 이미 나은 감정을 느끼면 치유가 일어난다','아메리카 원주민: 비를 "달라"고 기도하지 않고 비가 오는 상황을 생생하게 느끼고 체험한다'],quote:'이미 이루어진 것처럼 감정을 먼저 느끼는 것이 핵심이다.'},
+  'attraction-gratitude':{title:'감사 · 충만 상태',source:'📖 끌어당김의 법칙 + 가우르 고팔 다스',color:'#0F6E56',items:['감사는 정확한 기억이다 — 받은 친절과 선함을 기억하는 것이 용서와 관계 유지를 가능하게 한다','행복은 외부 상황이 아니라 내가 매 순간 결정하는 것이다','이미 가진 것을 쓰지 않고 채우려고만 하면 행복은 사라진다 (99 함정)','충만감·편안함 상태를 유지하는 것이 현실 창조의 기반이다'],quote:'행복은 목적지에 도달했을 때가 아니라 여행하는 지금 이 순간에 있다.'},
+  intuition:{title:'직감 따르기',source:'📖 당신의 느낌을 믿어라',color:'#0F6E56',items:['직감 = 가장 강력한 능력 — Steve Jobs: 직관은 지능보다 강력, Einstein: 직감은 인간의 핵심 능력','창조는 만드는 게 아니라 이미 있는 것을 끌어오는 것 (Mozart, Michelangelo)','미래는 이미 존재하고 직감은 그 신호를 받는 기능이다','직감이 강한 사람 특징: 혼자 있는 시간 확보 · 내면의 목소리 존중 · 감정과 연결 · 명상/성찰 습관'],quote:'미래는 이미 감지되고 있고, 직감은 그 신호다.'},
+  meditation:{title:'명상 · 수행',source:'📖 달라이 라마 + 명상으로 나를 치유하는 시간',color:'#854F0B',items:['명상은 단순한 휴식이 아니라 마음을 훈련하는 기술','효과: 스트레스 감소 · 집중력/기억력 향상 · 감정 조절 능력 상승 · 수면 개선 · 면역력 강화 · 뇌 기능 변화','고통의 원인 = 생각 + 집착 / 치유의 시작 = 긴장을 푸는 것','인간의 고통 원인 = 잘못된 인식(무지) — 내면이 바뀌지 않으면 세상도 바뀌지 않는다'],quote:'행복은 밖에서 얻는 게 아니라, 마음을 이해하고 다루는 능력에서 나온다.'},
+  'meditation-focus':{title:'집중 명상',source:'📖 달라이 라마가 전하는 명상 가이드',color:'#854F0B',items:['자세 안정 (등 곧게) → 호흡에 집중 → 생각 떠오르면 다시 돌아오기','산만함 ↓ / 감정 통제 ↑ / 통찰력 ↑','마음을 한 곳에 고정하는 훈련 — 외부 자극이 아닌 내면으로 주의를 모으는 연습','달마 조사의 화두 수행: 논리가 아닌 직관으로 — 일상의 모든 순간이 수행이 된다'],quote:'마음이 고요해질수록 더 명확하게 볼 수 있다.'},
+  'meditation-analysis':{title:'분석 명상',source:'📖 달라이 라마가 전하는 명상 가이드',color:'#854F0B',items:['본질을 탐구하는 명상 — 모든 것은 고정된 실체 없이 서로 의존해서 존재한다(연기)','변하지 않는 것은 없고, 독립적으로 존재하는 것도 없다는 것을 직접 탐구','이것을 깨달으면: 집착 ↓ / 분노 ↓ / 마음이 가벼워짐','고통은 현실 때문이 아니라 해석 때문에 생긴다는 것을 이해하게 된다'],quote:'지혜는 지식이 아니라 직접 경험으로 얻는 것이다.'},
+  'meditation-daily':{title:'일상 수행',source:'📖 명상으로 나를 치유하는 시간 + 달마 조사',color:'#854F0B',items:['일상 전체를 명상으로 만들 수 있다: 밥 먹기 → 식사 명상 / 걷기 → 걷기 명상 / 설거지 → 설거지 명상','핵심: 지금 이 순간에 완전히 집중하는 것','달마 조사: 먹기, 걷기, 일하기 = 수행 / 자기 관찰 — 지금 이 생각은 어디서 오는가?','4가지 치유 방법: 수용하기 · 자각하기(관찰) · 내려놓기 · 본성(참나)에 집중'],quote:'수행은 앉아서 하는 것이 아니라 삶 전체가 수행이다.'},
+  detach:{title:'집착 내려놓기',source:'📖 달마 조사 + 쇼펜하우어',color:'#993C1D',items:['달마의 4가지 선병: ① 직공병(공에 집착) ② 자향병(형식 집착) ③ 구호병(깨달음 욕심) ④ 만신병(교만)','모든 병을 다스리는 단 하나의 원칙: "진지하게 하되, 집착하지 않는다"','쇼펜하우어: 욕망이 클수록 고통이 크다. 고독을 즐기고 욕망을 줄이며 정신을 성장시키는 삶이 최고의 삶','뜨거운 컵을 쥐고 있는 상태 = 집착 / 집착하지 않으면 고통도 사라진다'],quote:'집착 없이, 꾸준히, 자연스럽게.'},
+  'detach-pain':{title:'고통은 신호',source:'📖 칼 융 심리학 + 명상으로 나를 치유하는 시간',color:'#993C1D',items:['성장형 고통 → 계속 감수 (운동, 학습) / 파괴형 고통 → 바꿔야 함 (관계, 환경)','핵심 질문: "이 고통은 나에게 무엇을 바꾸라고 말하는가?"','영적 각성에서 힘든 구간 = 포기 신호가 아니라 성장의 전 단계 (자아의 죽음)','효과: 삶의 방향 수정 · 반복 실수 감소 · 회복력 증가'],quote:'고통은 일시적이지만, 진짜가 아닌 삶은 평생 지속된다.'},
+  'detach-karma':{title:'번뇌 이해하기',source:'📖 달라이 라마 + 달마 조사',color:'#993C1D',items:['집착(탐욕), 분노, 질투 → 결국 고통으로 이어진다','선병은 병이면서 동시에 약이다 — 집착 자체가 수행 중이라는 증거','번뇌의 원인: 세상을 있는 그대로 보지 못하고 왜곡해서 봄 (무지)','해결 방법: 지혜(연기법 이해) + 연민(자애) → 집착이 줄고 마음이 가벼워짐'],quote:'문제는 번뇌 자체가 아니라 번뇌에 대한 집착이다.'},
+  'detach-ego':{title:'자아 집착 줄이기',source:'📖 칼 융 영적 각성 + 달마 조사',color:'#993C1D',items:['자아가 방해하는 5가지 메커니즘: 합리화 · 주의 분산 · 영적 팽창(가장 위험) · 투사 · 퇴행','영적 팽창 경계: "나는 깨달은 사람이다"라는 생각이 가장 위험한 상태','자아 집착의 결과: 에고가 더 강화됨 / 남 가르치려 함 / 인정받고 싶어함','진짜 깨달음 = 겸손 + 자비 / 가짜 나를 죽이고 진짜 나를 만드는 과정'],quote:'영적 각성은 더 나은 사람이 되는 과정이 아니라, 가짜 나를 죽이고 진짜 나를 만드는 과정이다.'},
+  present:{title:'현재 순간 깨어있기',source:'📖 에크하르트 톨레 100분 연속듣기',color:'#185FA5',items:['지금 이 순간만이 존재한다 — 과거는 기억 속에서만, 미래는 오면 이미 지금이 된다','저항이 고통을 만든다 — 고통은 상황 자체가 아니라 있는 그대로를 거부하는 마음에서 온다','지금을 받아들일 때 내면의 깊은 평화가 드러난다','현존할 때 형태와 시간을 초월한 근원과 연결된다 — 이것을 깨달음이라 한다'],quote:'지금으로부터 도망칠 수 없다면, 지금을 친구로 삼는 것이 현명하다.'},
+  'present-resist':{title:'저항 멈추기',source:'📖 에크하르트 톨레',color:'#185FA5',items:['생각의 차원에서는 판단으로, 감정의 차원에서는 부정적 감정으로 저항이 나타난다','있는 그대로를 받아들이는 것은 포기가 아니다','내면에서 저항하지 않으면서도 필요한 행동은 분명히 할 수 있다','진정한 힘은 저항이 아니라 현존에서 나온다'],quote:'저항하지 않음은 수동이 아니라 가장 강력한 내적 행동이다.'},
+  'present-surrender':{title:'내맡김',source:'📖 에크하르트 톨레 + 명상으로 나를 치유하는 시간',color:'#185FA5',items:['내맡김 = 있는 그대로를 받아들이는 것, 포기가 아니라 더 큰 흐름에 합류하는 것','가우르 고팔의 CAR 법칙: Change(바꿀 수 있는 것) → Accept(받아들이기) → Rise(더 높은 시각으로)','과거에 묶이면 고통 / 현재에 머물면 치유','"나는 충분히 했다. 지금 이대로 충분하다" — 취침 전 내맡김 루틴'],quote:'내맡김은 실패가 아니라 지혜로운 선택이다.'},
+  'present-painbody':{title:'고통체 알아차리기',source:'📖 에크하르트 톨레',color:'#185FA5',items:['고통체 = 과거의 감정적 고통이 몸과 마음에 쌓인 것','고통체는 더 많은 고통을 먹고 살며, 우리를 지배하려 한다','해법은 싸우는 것이 아니라 조용히 관찰하는 것','알아차리는 순간 고통체와의 동일화가 끊어진다'],quote:'알아차림이 치유의 시작이다.'},
+  selftrust:{title:'자기 신뢰 · 수용',source:'📖 칼 융 심리학 + 가우르 고팔 다스',color:'#993556',items:['조건 없는 자기 수용 — "성공해야 인정, 잘해야 가치 있음" 믿음에서 벗어나기','행복의 책임은 나에게 있다 — 자신의 행복에 대한 결정권을 다른 사람에게 양도하지 말 것','영적으로 성숙한 사람의 4가지 핵심 습관: 그림자와의 대화 · 내적 침묵 · 고통을 신호로 해석 · 불완전함 수용','부러진 연필도 깎으면 다시 쓸 수 있다 — 무너졌다고 끝이 아니다'],quote:'행복은 밖에서 얻는 것이 아니라, 내가 어떤 정신을 가진 사람이냐에 달려 있다.'},
+  'selftrust-compare':{title:'비교 내려놓기',source:'📖 쇼펜하우어 + 가우르 고팔 다스',color:'#993556',items:['타인 시선, 욕망, 외부 집착이 불행의 원인이다','모든 사람은 좋은 점과 나쁜 점이 함께 오는 패키지다','우리는 같은 트랙에서 달리는 게 아니다 — 각자의 속도와 방향이 다르다','사회적 비교 → 고통 / 자기 기준으로의 선택 → 자유'],quote:'나는 타인의 기준이 아닌 나 자신의 기준으로 산다.'},
+  'selftrust-shadow':{title:'그림자 통합',source:'📖 칼 융 — 영적으로 성장한 사람들만 실천하는 습관',color:'#993556',items:['그림자 = 억압된 감정 + 욕망 + 재능까지 포함','핵심 행동: 하루 중 불편했던 순간을 떠올리고 "이 감정은 나에게 무엇을 말하려는가?" 질문하기','효과: 질투 → 내가 원하는 방향 발견 / 불편함 → 숨겨진 욕구 발견','영적 각성은 "더 나은 사람이 되는 과정"이 아니라 "자기 전체를 이해하고 통합하는 과정"'],quote:'그림자를 억압하면 더 강해지고, 바라보고 통합하면 자유로워진다.'},
+  'selftrust-imperfect':{title:'불완전함 수용',source:'📖 칼 융 심리학 + 가우르 고팔 다스',color:'#993556',items:['완벽 추구 = 스트레스의 원인 / 성숙한 사람 = 불완전함 자체를 인정','핵심 태도: 실수 → 숨기지 않음 / 부족함 → 자연스럽게 인정 / 인생 → 원래 예측 불가능','효과: 자기 수용 · 타인에 대한 관용 증가 · 관계 스트레스 감소','자기(Self)와의 대면 → 진짜 본질과 접촉 → 가치관 완전 재구성 → 유연한 삶 가능'],quote:'불완전함을 인정할 때, 비로소 완전한 나로 살 수 있다.'},
+};
+
+function showPopup(key){
+  const d=POPUP_DATA[key]; if(!d) return;
+  document.getElementById('popup-title').textContent=d.title;
+  document.getElementById('popup-source').textContent=d.source;
+  let html='<div class="popup-items">';
+  d.items.forEach(item=>{html+=`<div class="popup-item" style="border-left-color:${d.color}">${item}</div>`;});
+  html+='</div>';
+  if(d.quote) html+=`<div class="popup-quote" style="border-left-color:${d.color}">${d.quote}</div>`;
+  document.getElementById('popup-body').innerHTML=html;
   document.getElementById('popup').classList.add('open');
 }
+function closePopup(){document.getElementById('popup').classList.remove('open');}
+function closePopupOutside(e){if(e.target.id==='popup') closePopup();}
+document.addEventListener('keydown',e=>{if(e.key==='Escape') closePopup();});
 
-function closePopup(){
-  document.getElementById('popup').classList.remove('open');
-}
-
-function closePopupOutside(e){
-  if(e.target.id === 'popup') closePopup();
-}
-
-document.addEventListener('keydown', function(e){
-  if(e.key === 'Escape') closePopup();
-});
+buildSVG();
 </script>
+</body>
+</html>
