@@ -180,7 +180,17 @@ function calcDefaultPos(){
 }
 
 let DEFAULT_POS=calcDefaultPos();
-let positions=JSON.parse(JSON.stringify(DEFAULT_POS));
+
+const STORAGE_KEY_POS='mindmap_success_positions';
+const STORAGE_KEY_THEME='mindmap_success_theme';
+
+function savePositions(){try{localStorage.setItem(STORAGE_KEY_POS,JSON.stringify(positions));}catch(e){}}
+function loadPositions(){try{const s=localStorage.getItem(STORAGE_KEY_POS);return s?JSON.parse(s):null;}catch(e){return null;}}
+function clearPositions(){try{localStorage.removeItem(STORAGE_KEY_POS);}catch(e){}}
+function saveTheme(dark){try{localStorage.setItem(STORAGE_KEY_THEME,dark?'dark':'light');}catch(e){}}
+function loadTheme(){try{return localStorage.getItem(STORAGE_KEY_THEME)||'light';}catch(e){return 'light';}}
+
+let positions=loadPositions()||JSON.parse(JSON.stringify(DEFAULT_POS));
 const linkEls={};
 const nodeGEls={};
 
@@ -316,7 +326,7 @@ document.addEventListener('mousemove',e=>{
   updateNodePos(dragging.key);
   updateAllLinks(dragging.key);
 });
-document.addEventListener('mouseup',()=>{if(dragging){dragging.g.classList.remove('drag-active');dragging=null;}});
+document.addEventListener('mouseup',()=>{if(dragging){dragging.g.classList.remove('drag-active');dragging=null;savePositions();}});
 document.addEventListener('touchmove',e=>{
   if(!dragging)return;e.preventDefault();
   const t=e.touches[0];
@@ -326,7 +336,7 @@ document.addEventListener('touchmove',e=>{
   updateNodePos(dragging.key);
   updateAllLinks(dragging.key);
 },{passive:false});
-document.addEventListener('touchend',()=>{if(dragging){dragging.g.classList.remove('drag-active');dragging=null;}});
+document.addEventListener('touchend',()=>{if(dragging){dragging.g.classList.remove('drag-active');dragging=null;savePositions();}});
 
 function toggleEditMode(){
   editMode=!editMode;
@@ -337,17 +347,23 @@ function toggleEditMode(){
   if(editMode){btn.textContent='✅ 편집 완료';btn.classList.add('active');tb.classList.add('visible');hint.textContent='✏️ 편집 모드 — 노드를 드래그해서 이동하세요';svg.classList.add('edit-mode');}
   else{btn.textContent='✏️ 노드 위치 수정';btn.classList.remove('active');tb.classList.remove('visible');hint.textContent='💡 노드를 클릭하면 상세 내용을 볼 수 있습니다';svg.classList.remove('edit-mode');}
 }
-function resetLayout(){positions=JSON.parse(JSON.stringify(DEFAULT_POS));buildSVG();}
-function spreadMore(){Object.keys(positions).forEach(k=>{positions[k].x=CX+(positions[k].x-CX)*1.13;positions[k].y=CY+(positions[k].y-CY)*1.13;});buildSVG();}
-function spreadLess(){Object.keys(positions).forEach(k=>{positions[k].x=CX+(positions[k].x-CX)*0.87;positions[k].y=CY+(positions[k].y-CY)*0.87;});buildSVG();}
+function resetLayout(){positions=JSON.parse(JSON.stringify(DEFAULT_POS));clearPositions();buildSVG();}
+function spreadMore(){Object.keys(positions).forEach(k=>{positions[k].x=CX+(positions[k].x-CX)*1.13;positions[k].y=CY+(positions[k].y-CY)*1.13;});savePositions();buildSVG();}
+function spreadLess(){Object.keys(positions).forEach(k=>{positions[k].x=CX+(positions[k].x-CX)*0.87;positions[k].y=CY+(positions[k].y-CY)*0.87;});savePositions();buildSVG();}
 
-let isDark=false;
+let isDark=loadTheme()==='dark';
 function toggleTheme(){
   isDark=!isDark;
   document.documentElement.setAttribute('data-theme',isDark?'dark':'');
   document.getElementById('toggle-label').textContent=isDark?'라이트모드':'다크모드';
   document.getElementById('toggle-thumb').textContent=isDark?'☀️':'🌙';
+  saveTheme(isDark);
   buildSVG();
+}
+if(isDark){
+  document.documentElement.setAttribute('data-theme','dark');
+  document.getElementById('toggle-label').textContent='라이트모드';
+  document.getElementById('toggle-thumb').textContent='☀️';
 }
 
 const POPUP_DATA={
