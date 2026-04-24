@@ -181,7 +181,17 @@ function calcDefaultPos(){
 }
 
 let DEFAULT_POS=calcDefaultPos();
-let positions=JSON.parse(JSON.stringify(DEFAULT_POS));
+
+const STORAGE_KEY_POS='mindmap_inner_positions';
+const STORAGE_KEY_THEME='mindmap_inner_theme';
+
+function savePositions(){try{localStorage.setItem(STORAGE_KEY_POS,JSON.stringify(positions));}catch(e){}}
+function loadPositions(){try{const s=localStorage.getItem(STORAGE_KEY_POS);return s?JSON.parse(s):null;}catch(e){return null;}}
+function clearPositions(){try{localStorage.removeItem(STORAGE_KEY_POS);}catch(e){}}
+function saveTheme(dark){try{localStorage.setItem(STORAGE_KEY_THEME,dark?'dark':'light');}catch(e){}}
+function loadTheme(){try{return localStorage.getItem(STORAGE_KEY_THEME)||'light';}catch(e){return 'light';}}
+
+let positions=loadPositions()||JSON.parse(JSON.stringify(DEFAULT_POS));
 
 /* 링크/노드 요소 참조 */
 const linkEls={};
@@ -326,7 +336,7 @@ document.addEventListener('mousemove',e=>{
   updateNodePos(dragging.key);
   updateAllLinks(dragging.key);
 });
-document.addEventListener('mouseup',()=>{if(dragging){dragging.g.classList.remove('drag-active');dragging=null;}});
+document.addEventListener('mouseup',()=>{if(dragging){dragging.g.classList.remove('drag-active');dragging=null;savePositions();}});
 document.addEventListener('touchmove',e=>{
   if(!dragging)return; e.preventDefault();
   const t=e.touches[0];
@@ -336,7 +346,7 @@ document.addEventListener('touchmove',e=>{
   updateNodePos(dragging.key);
   updateAllLinks(dragging.key);
 },{passive:false});
-document.addEventListener('touchend',()=>{if(dragging){dragging.g.classList.remove('drag-active');dragging=null;}});
+document.addEventListener('touchend',()=>{if(dragging){dragging.g.classList.remove('drag-active');dragging=null;savePositions();}});
 
 /* ── 편집 모드 ── */
 function toggleEditMode(){
@@ -357,24 +367,31 @@ function toggleEditMode(){
     svg.classList.remove('edit-mode');
   }
 }
-function resetLayout(){positions=JSON.parse(JSON.stringify(DEFAULT_POS));buildSVG();}
+function resetLayout(){positions=JSON.parse(JSON.stringify(DEFAULT_POS));clearPositions();buildSVG();}
 function spreadMore(){
   Object.keys(positions).forEach(k=>{positions[k].x=CX+(positions[k].x-CX)*1.13;positions[k].y=CY+(positions[k].y-CY)*1.13;});
-  buildSVG();
+  savePositions();buildSVG();
 }
 function spreadLess(){
   Object.keys(positions).forEach(k=>{positions[k].x=CX+(positions[k].x-CX)*0.87;positions[k].y=CY+(positions[k].y-CY)*0.87;});
-  buildSVG();
+  savePositions();buildSVG();
 }
 
 /* ── 테마 ── */
-let isDark=false;
+let isDark=loadTheme()==='dark';
 function toggleTheme(){
   isDark=!isDark;
   document.documentElement.setAttribute('data-theme',isDark?'dark':'');
   document.getElementById('toggle-label').textContent=isDark?'라이트모드':'다크모드';
   document.getElementById('toggle-thumb').textContent=isDark?'☀️':'🌙';
+  saveTheme(isDark);
   buildSVG();
+}
+// 초기 테마 적용
+if(isDark){
+  document.documentElement.setAttribute('data-theme','dark');
+  document.getElementById('toggle-label').textContent='라이트모드';
+  document.getElementById('toggle-thumb').textContent='☀️';
 }
 
 /* ── 팝업 데이터 ── */
